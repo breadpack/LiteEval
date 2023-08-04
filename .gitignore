@@ -1,1 +1,4 @@
-/.idea/.idea.LiteEval/.idea/.gitignore
+.idea
+obj/
+bin/
+*.DotSettings.user
