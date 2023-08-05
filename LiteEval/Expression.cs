@@ -220,7 +220,7 @@ namespace LiteEval {
 
         public string expression {
             get => _expression.ToString();
-            init {
+            set {
                 _expression = value.Replace(" ", "").AsMemory();
                 GetToken(_expression, out _tokens);
             }
@@ -246,22 +246,22 @@ namespace LiteEval {
 
             foreach (Match m in tokenMatches) {
                 if (m.Groups["number"].Success) {
-                    var valueToken = new ValueToken(m.ValueSpan);
+                    var valueToken = new ValueToken(m.Value.AsSpan());
                     tokens.Add(valueToken);
                     previousToken = valueToken;
                 }
                 else if (m.Groups["variable"].Success) {
-                    var variableToken = new VariableToken(this, m.ValueSpan);
+                    var variableToken = new VariableToken(this, m.Value.AsSpan());
                     tokens.Add(variableToken);
                     previousToken = variableToken;
                 }
                 else if (m.Groups["function"].Success) {
-                    var functionToken = new FunctionToken(m.ValueSpan);
+                    var functionToken = new FunctionToken(m.Value.AsSpan());
                     stack.Push(functionToken);
                     previousToken = functionToken;
                 }
                 else if (m.Groups["operator"].Success) {
-                    var opToken = new OperatorToken(m.ValueSpan[0]);
+                    var opToken = new OperatorToken(m.Value.AsSpan()[0]);
 
                     if (opToken.Type == OperatorToken.OperatorType.Subtract && previousToken is null or OperatorToken) {
                         opToken.Type = OperatorToken.OperatorType.UnaryMinus;
@@ -289,8 +289,8 @@ namespace LiteEval {
                         }
                         
                         stack.Push(opToken);
-                        previousToken = opToken;
                     }
+                    previousToken = opToken;
                 }
             }
 
