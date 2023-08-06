@@ -14,7 +14,7 @@ namespace LiteEval {
         public double value { get; }
 
         public ValueToken(ReadOnlySpan<char> value) {
-            this.value = Convert.ToDouble(value.ToString());
+            this.value = double.Parse(value);
         }
 
         public ValueToken(double value) {
@@ -44,6 +44,7 @@ namespace LiteEval {
             ParenthesisStart,
             ParenthesisEnd,
             UnaryMinus,
+            Comma,
         }
 
         public OperatorType Type { get; set; }
@@ -68,6 +69,7 @@ namespace LiteEval {
                 '^' => OperatorType.Power,
                 '(' => OperatorType.ParenthesisStart,
                 ')' => OperatorType.ParenthesisEnd,
+                ',' => OperatorType.Comma,
                 _ => throw new Exception("unknown oper " + value)
             };
         }
@@ -216,13 +218,13 @@ namespace LiteEval {
         private static readonly char   exponentChar = 'E';
         private static readonly char[] operatorChar = new char[] { '(', ')', '+', '-', '/', '^', '*' };
 
-        private ReadOnlyMemory<char> _expression = Memory<char>.Empty;
+        private string _expression;
 
         public string expression {
             get => _expression.ToString();
             set {
-                _expression = value.Replace(" ", "").AsMemory();
-                GetToken(_expression, out _tokens);
+                _expression = value.Replace(" ", "");
+                GetToken(in _expression, out _tokens);
             }
         }
 
@@ -237,14 +239,14 @@ namespace LiteEval {
 
         private static readonly Regex Regex = new Regex(@"(?<number>\d+(\.\d+)?)|(?<function>[a-zA-Z_][_a-zA-Z0-9]+(?=\())|(?<variable>[a-zA-Z_][_a-zA-Z0-9]*)|(?<operator>[+/*^()-])", RegexOptions.Compiled);
 
-        private void GetToken(ReadOnlyMemory<char> expression, out IToken[] result) {
+        private void GetToken(in string expression, out IToken[] result) {
             var    tokens        = new List<IToken>();
-            var    tokenMatches  = Regex.Matches(expression.ToString());
+            var m = Regex.Match(expression);
             IToken previousToken = null;
 
             var stack = new Stack<IToken>();
 
-            foreach (Match m in tokenMatches) {
+            while (m.Success) {
                 if (m.Groups["number"].Success) {
                     var valueToken = new ValueToken(m.Value.AsSpan());
                     tokens.Add(valueToken);
@@ -269,18 +271,24 @@ namespace LiteEval {
 
                     if (opToken.Type == OperatorToken.OperatorType.ParenthesisStart) {
                         stack.Push(opToken);
+                        previousToken = opToken;
                     }
-                    else if (opToken.Type == OperatorToken.OperatorType.ParenthesisEnd) {
+                    else if (opToken.Type == OperatorToken.OperatorType.ParenthesisEnd || opToken.Type == OperatorToken.OperatorType.Comma ) {
                         while (stack.Count > 0 && !(stack.Peek() is OperatorToken opParenthesis && opParenthesis.Type == OperatorToken.OperatorType.ParenthesisStart)) {
                             tokens.Add(stack.Pop());
                         }
 
-                        if (stack.Count > 0 && stack.Peek() is OperatorToken op && op.Type == OperatorToken.OperatorType.ParenthesisStart) {
-                            stack.Pop(); // Discard '('
-                        }
+                        if (opToken.Type != OperatorToken.OperatorType.Comma) {
+                            if (stack.Count > 0 && stack.Peek() is OperatorToken op && op.Type == OperatorToken.OperatorType.ParenthesisStart) {
+                                stack.Pop(); // Discard '('
+                                previousToken = opToken;
+                            }
 
-                        if (stack.Count > 0 && stack.Peek() is FunctionToken) {
-                            tokens.Add(stack.Pop()); // Add the function token to the output
+                            if (stack.Count > 0 && stack.Peek() is FunctionToken) {
+                                var functionToken = stack.Pop();
+                                tokens.Add(functionToken); // Add the function token to the output
+                                previousToken = functionToken;
+                            }
                         }
                     }
                     else {
@@ -289,9 +297,11 @@ namespace LiteEval {
                         }
                         
                         stack.Push(opToken);
+                        previousToken = opToken;
                     }
-                    previousToken = opToken;
                 }
+
+                m = m.NextMatch();
             }
 
             while (stack.Count > 0) {

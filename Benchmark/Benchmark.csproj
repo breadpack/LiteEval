@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\LiteEval\LiteEval.csproj" />
+      <ProjectReference Include="..\Solution\LiteEval.csproj" />
     </ItemGroup>
 
 </Project>

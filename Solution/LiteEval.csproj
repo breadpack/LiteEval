@@ -2,8 +2,13 @@
 
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
-        <Nullable>enable</Nullable>
         <LangVersion>9</LangVersion>
     </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Include="..\LiteEval\Runtime\Expression.cs">
+        <Link>Expression.cs</Link>
+      </Compile>
+    </ItemGroup>
 
 </Project>

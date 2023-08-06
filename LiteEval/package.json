@@ -1,0 +1,19 @@
+{
+    "name": "com.startergames.liteeval",
+    "version": "1.0.0",
+    "displayName": "LiteEval",
+    "description": "lite-weight expression evaluator",
+    "unity": "2022.3",
+    "keywords": [
+        "unity",
+        "package",
+        "liteeval",
+        "expression",
+        "evaluator"
+    ],
+    "author": {
+        "name": "Starter Games",
+        "email": "developer@startergames.com",
+        "url": "https://www.startergames.com"
+    }
+}

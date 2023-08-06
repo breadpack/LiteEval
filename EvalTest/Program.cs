@@ -42,6 +42,12 @@ public class Tests {
     }
 
     [Test]
+    public void TestFunction2Args() {
+        Expression exp = new Expression("max(1, 3)");
+        Assert.AreEqual(3, exp.Result);
+    }
+
+    [Test]
     public void TestMultipleFunctions() {
         Expression exp = new Expression("max(2,3) + -min(5,6)");
         Assert.AreEqual(-2, exp.Result);
