@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace LiteEval {
     public interface IValueProvider {
@@ -36,7 +37,7 @@ namespace LiteEval {
         internal class ValueToken : IValueToken {
             public double value { get; }
 
-            public ValueToken(ReadOnlySpan<char> value) {
+            public ValueToken(in string value) {
                 this.value = double.Parse(value);
             }
 
@@ -102,6 +103,16 @@ namespace LiteEval {
             private readonly string            method;
             private readonly List<IValueToken> args = new List<IValueToken>();
 
+            private static readonly ThreadLocal<Random> _threadLocalRandom = new ThreadLocal<Random>(
+                () => new Random(Interlocked.Increment(ref seed)));
+            private static int seed = Environment.TickCount;
+            private static double Rand() {
+                return _threadLocalRandom.Value.NextDouble();
+            }
+            private static int Rand(int min, int max) {
+                return _threadLocalRandom.Value.Next(min, max);
+            }
+
             public int ArgsCount =>
                 method switch {
                     "abs" => 1,
@@ -127,6 +138,7 @@ namespace LiteEval {
                     "tan" => 1,
                     "tanh" => 1,
                     "truncate" => 1,
+                    "random" => 0,
                     _ => throw new Exception("unknown function " + method)
                 };
 
@@ -228,6 +240,14 @@ namespace LiteEval {
                         var val = arg.Pop() as IValueToken;
                         return new ValueToken(Math.Truncate(val.value));
                     }
+                    case "random": {
+                        return new ValueToken(Rand());
+                    }
+                    case "irandomrange": {
+                        var val1 = arg.Pop() as IValueToken;
+                        var val2 = arg.Pop() as IValueToken;
+                        return new ValueToken(Rand((int)val1.value, (int)val2.value));
+                    }
                     default:
                         throw new Exception("unknown function " + method);
                 }
@@ -239,7 +259,6 @@ namespace LiteEval {
         }
 
         private static readonly char   exponentChar = 'E';
-        private static readonly char[] operatorChar = new char[] { '(', ')', '+', '-', '/', '^', '*' };
 
         private string _expression;
 
@@ -251,19 +270,21 @@ namespace LiteEval {
             }
         }
 
-        private DefaultValueProvider _valueProvider = new DefaultValueProvider();
+        private readonly DefaultValueProvider _valueProvider = new DefaultValueProvider();
         private IValueProvider       _tempProvider;
 
         private IToken[]       _tokens;
         
         public double this[string name] {
             get {
-                if (_tempProvider.TryGetValue(name, out var value))
+                if (_tempProvider?.TryGetValue(name, out var value) ?? false)
                     return value;
-                return _valueProvider[name];
+                return _valueProvider.TryGetValue(name, out value) ? value : 0;
             }
             set => _valueProvider[name] = value;
         }
+
+        public Expression() { }
 
         public Expression(string expr) {
             expression = expr.Replace(" ", "");
@@ -280,7 +301,7 @@ namespace LiteEval {
 
             while (m.Success) {
                 if (m.Groups["number"].Success) {
-                    var valueToken = new ValueToken(m.Value.AsSpan());
+                    var valueToken = new ValueToken(m.Value);
                     tokens.Add(valueToken);
                     previousToken = valueToken;
                 }
@@ -344,6 +365,10 @@ namespace LiteEval {
         }
 
         public double GetResult(IValueProvider valueProvider = null) {
+            if (string.IsNullOrEmpty(_expression) || _tokens == null || _tokens.Length == 0) {
+                throw new InvalidOperationException($"Expression is not well-formed. (expression:{_expression})");
+            }
+            
             var stack = new Stack<IToken>();
 
             foreach (var token in _tokens) {
