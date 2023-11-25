@@ -4,8 +4,6 @@ using System.Text.RegularExpressions;
 
 namespace LiteEval {
     public class Expression {
-        internal interface IToken { }
-
         private static readonly char exponentChar = 'E';
 
         private ReadOnlyMemory<char> _expression;
@@ -19,8 +17,17 @@ namespace LiteEval {
         }
 
         private readonly DefaultValueProvider _valueProvider = new();
+        private static   IValueProvider       _globalProvider;
         private          IValueProvider       _customProvider;
         private          IToken[]             _tokens;
+        
+        public static void SetGlobalValueProvider(IValueProvider provider) {
+            _globalProvider = provider;
+        }
+        
+        public void SetCustomValueProvider(IValueProvider provider) {
+            _customProvider = provider;
+        }
 
         public double this[string name] {
             get => this[name.AsMemory()];
@@ -29,7 +36,9 @@ namespace LiteEval {
 
         public double this[ReadOnlyMemory<char> name] {
             get {
-                if (_customProvider?.TryGetValue(name, out var value) ?? false)
+                if (_globalProvider?.TryGetValue(name, out var value) ?? false)
+                    return value;
+                if (_customProvider?.TryGetValue(name, out value) ?? false)
                     return value;
                 return _valueProvider.TryGetValue(name, out value) ? value : 0;
             }
@@ -42,13 +51,13 @@ namespace LiteEval {
             expression = expr;
         }
 
-        private static readonly Regex Regex = new Regex(@"(?<number>\d+(\.\d+)?)|(?<function>[a-zA-Z_][_a-zA-Z0-9]+(?=\s*\())|(?<variable>[a-zA-Z_][_a-zA-Z0-9]*)|(?<operator>[+/*^()-])", RegexOptions.Compiled);
+        private static readonly Regex Regex = new Regex(@"(?<number>\d+(\.\d+)?)|(?<function>[a-zA-Z_][_a-zA-Z0-9]+(?=\s*\())|{\s*(?<variable>[a-zA-Z_][\._a-zA-Z0-9]*)\s*}|(?<operator>[+/*^()-])", RegexOptions.Compiled);
 
         private void GetToken(in string expression, out IToken[] result) {
             var    tokens        = new List<IToken>();
             var    m             = Regex.Match(expression);
             IToken previousToken = null;
-            var stack = new Stack<IToken>();
+            var    stack         = new Stack<IToken>();
 
             while (m.Success) {
                 if (m.Groups["number"].Success) {
@@ -57,7 +66,8 @@ namespace LiteEval {
                     previousToken = valueToken;
                 }
                 else if (m.Groups["variable"].Success) {
-                    var variableToken = new VariableToken(this, _expression.Slice(m.Index, m.Length));
+                    var g             = m.Groups["variable"];
+                    var variableToken = new VariableToken(this, _expression.Slice(g.Index, g.Length));
                     tokens.Add(variableToken);
                     previousToken = variableToken;
                 }

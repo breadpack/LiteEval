@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 
 namespace LiteEval {
-    internal class FunctionToken : Expression.IToken {
+    internal class FunctionToken : IToken {
         private readonly ReadOnlyMemory<char> method;
         private readonly List<IValueToken>    args = new List<IValueToken>();
 

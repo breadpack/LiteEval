@@ -1,5 +1,5 @@
 ﻿namespace LiteEval {
-    internal interface IValueToken : Expression.IToken {
+    internal interface IValueToken : IToken {
         double value { get; }
     }
 }

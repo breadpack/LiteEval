@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace LiteEval {
-    internal class OperatorToken : Expression.IToken {
+    internal class OperatorToken : IToken {
         public enum OperatorType {
             Add,
             Subtract,
