@@ -32,8 +32,8 @@ jobs:
 
       - name: Copy DLL and PDB to Unity package
         run: |
-          cp Solution/bin/Release/netstandard2.1/*.dll Packages/RangeExpression/Runtime/
-          cp Solution/bin/Release/netstandard2.1/*.pdb Packages/RangeExpression/Runtime/
+          cp Solution/bin/Release/netstandard2.1/*.dll LiteEval/Runtime/
+          cp Solution/bin/Release/netstandard2.1/*.pdb LiteEval/Runtime/
 
       - name: Commit files
         run: |
