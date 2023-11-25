@@ -1,0 +1,56 @@
+name: Build and publish NuGet package
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'Solution/LiteEval.csproj'
+  workflow_dispatch: # This line allows manual triggering
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: '7.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore Solution/LiteEval.sln
+
+      - name: Build
+        run: dotnet build Solution/LiteEval.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Solution/LiteEval.sln --no-restore --verbosity normal
+
+      - name: Copy DLL and PDB to Unity package
+        run: |
+          cp Solution\bin\Release\netstandard2.1/*.dll Packages/RangeExpression/Runtime/
+          cp Solution\bin\Release\netstandard2.1/*.pdb Packages/RangeExpression/Runtime/
+
+      - name: Commit files
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add LiteEval/package.json
+          git add LiteEval/Runtime/
+          git diff --staged --quiet || git commit -m "Update Unity package binaries" || echo "No changes to commit"
+          git push
+          
+      - name: Pack
+        run: dotnet pack Solution/LiteEval.csproj --configuration Release --no-build --output ./nupkgs
+        
+      - name: Add GitHub Source
+        run: dotnet nuget add source "https://nuget.pkg.github.com/startergames/index.json" --name "github" --username OWNER --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text
+
+      - name: Publish to GitHub Packages
+        run: dotnet nuget push ./nupkgs/*.nupkg --source "github" --skip-duplicate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
