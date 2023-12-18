@@ -16,15 +16,15 @@ namespace LiteEval {
             }
         }
 
-        private readonly DefaultValueProvider _valueProvider = new();
-        private static   IValueProvider       _globalProvider;
-        private          IValueProvider       _customProvider;
-        private          IToken[]             _tokens;
-        
+        private readonly _DefaultValueProvider _defaultValueProvider = new();
+        private static   IValueProvider        _globalProvider;
+        private          IValueProvider        _customProvider;
+        private          IToken[]              _tokens;
+
         public static void SetGlobalValueProvider(IValueProvider provider) {
             _globalProvider = provider;
         }
-        
+
         public void SetCustomValueProvider(IValueProvider provider) {
             _customProvider = provider;
         }
@@ -36,13 +36,15 @@ namespace LiteEval {
 
         public double this[ReadOnlyMemory<char> name] {
             get {
-                if (_globalProvider?.TryGetValue(name, out var value) ?? false)
-                    return value;
-                if (_customProvider?.TryGetValue(name, out value) ?? false)
-                    return value;
-                return _valueProvider.TryGetValue(name, out value) ? value : 0;
+                if ((_customProvider ?? _defaultValueProvider).TryGetValue(name, out var localValue))
+                    return localValue;
+                if (ValueProviderContext.TryGetValue(name, out var contextValue))
+                    return contextValue;
+                if (_globalProvider?.TryGetValue(name, out var globalValue) ?? false)
+                    return globalValue;
+                return 0;
             }
-            set => _valueProvider[name] = value;
+            set => _defaultValueProvider[name] = value;
         }
 
         public Expression() { }
@@ -125,7 +127,7 @@ namespace LiteEval {
             result = tokens.ToArray();
         }
 
-        public double GetResult(IValueProvider valueProvider = null) {
+        public double GetResult() {
             unsafe {
                 if (_expression.Length == 0 || _tokens == null || _tokens.Length == 0) {
                     throw new InvalidOperationException($"Expression is not well-formed. (expression:{_expression})");

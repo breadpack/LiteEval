@@ -105,4 +105,20 @@ public class Tests {
 
         Assert.IsNotNull(exp.Result);
     }
+
+    [Test]
+    public void TextContext() {
+        using (new ValueProviderContext(new ValueProvider()
+                                            .Add("x", 5))) {
+            using (new ValueProviderContext(new ValueProvider()
+                                                .Add("x", 7))) {
+                using (new ValueProviderContext(new ValueProvider()
+                                                    .Add("y", 8))) {
+                    var exp = new Expression("{x}+{y}");
+                    exp["y"] = 10;
+                    Assert.AreEqual(17.0, exp.Result);
+                }
+            }
+        }
+    }
 }

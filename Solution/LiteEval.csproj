@@ -7,7 +7,7 @@
 
         <AssemblyName>Starter.LiteEval</AssemblyName>
         <PackageId>Starter.LiteEval</PackageId>
-        <Version>1.0.1</Version>
+        <Version>1.0.2</Version>
         <Authors>Starter</Authors>
         <Company>Starter</Company>
         <RepositoryUrl>https://github.com/startergames/LiteEval</RepositoryUrl>
