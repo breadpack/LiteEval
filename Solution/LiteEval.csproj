@@ -5,12 +5,13 @@
         <LangVersion>9</LangVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-        <AssemblyName>Starter.LiteEval</AssemblyName>
-        <PackageId>Starter.LiteEval</PackageId>
-        <Version>1.0.2</Version>
-        <Authors>Starter</Authors>
-        <Company>Starter</Company>
-        <RepositoryUrl>https://github.com/startergames/LiteEval</RepositoryUrl>
+        <AssemblyName>dev.breadpack.LiteEval</AssemblyName>
+        <PackageId>dev.breadpack.LiteEval</PackageId>
+        <Product>LiteEval</Product>
+        <Description>This project is a lightweight expression evaluator for C#. It includes utilities for parsing and evaluating mathematical expressions.</Description>
+        <Version>1.0.3</Version>
+        <Authors>BreadPack</Authors>
+        <RepositoryUrl>https://github.com/breadpack/LiteEval</RepositoryUrl>
         <RepositoryType>github</RepositoryType>
     </PropertyGroup>
 

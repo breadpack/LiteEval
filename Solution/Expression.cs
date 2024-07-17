@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using LiteEval.Enums;
+using LiteEval.Tokens;
 
 namespace LiteEval {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -45,27 +47,27 @@ namespace LiteEval {
                     previousToken = token;
                 }
                 else if (m.Groups["operator"].Success) {
-                    var operatorToken = slice[0] == '-' && (previousToken is null || previousToken.Value.Type == Token.TokenType.Operator)
+                    var operatorToken = slice[0] == '-' && (previousToken is null || previousToken.Value.Type == TokenType.Operator)
                                             ? Token.CreateUnaryMinusToken()
                                             : Token.CreateOperatorToken(slice[0]);
 
-                    if (operatorToken.Operator == Token.OperatorType.ParenthesisStart) {
+                    if (operatorToken.Operator.Type == OperatorType.ParenthesisStart) {
                         stack.Push(operatorToken);
                         previousToken = operatorToken;
                     }
-                    else if (operatorToken.Operator is Token.OperatorType.ParenthesisEnd
-                                                    or Token.OperatorType.Comma) {
-                        while (stack.Count > 0 && stack.Peek() is not { Operator : Token.OperatorType.ParenthesisStart }) {
+                    else if (operatorToken.Operator.Type is OperatorType.ParenthesisEnd
+                                                         or OperatorType.Comma) {
+                        while (stack.Count > 0 && stack.Peek() is not { Operator : { Type: OperatorType.ParenthesisStart } }) {
                             tokens.Add(stack.Pop());
                         }
 
-                        if (operatorToken.Operator != Token.OperatorType.Comma) {
-                            if (stack.Count > 0 && stack.Peek() is { Operator : Token.OperatorType.ParenthesisStart }) {
+                        if (operatorToken.Operator.Type != OperatorType.Comma) {
+                            if (stack.Count > 0 && stack.Peek() is { Operator : { Type : OperatorType.ParenthesisStart } }) {
                                 stack.Pop(); // Discard '('
                                 previousToken = operatorToken;
                             }
 
-                            if (stack.Count > 0 && stack.Peek() is { Type : Token.TokenType.Function }) {
+                            if (stack.Count > 0 && stack.Peek() is { Type : TokenType.Function }) {
                                 var functionToken = stack.Pop();
                                 tokens.Add(functionToken); // Add the function token to the output
                                 previousToken = functionToken;
@@ -73,7 +75,7 @@ namespace LiteEval {
                         }
                     }
                     else {
-                        while (stack.Count > 0 && stack.Peek() is { Type : Token.TokenType.Operator } && stack.Peek().Priority >= operatorToken.Priority) {
+                        while (stack.Count > 0 && stack.Peek() is { Type : TokenType.Operator } && stack.Peek().Operator.Priority >= operatorToken.Operator.Priority) {
                             tokens.Add(stack.Pop());
                         }
 
@@ -99,54 +101,47 @@ namespace LiteEval {
 
                 foreach (var token in Tokens) {
                     switch (token.Type) {
-                        case Token.TokenType.Value:
+                        case TokenType.Value:
                             stack[++top] = token.Value;
                             break;
-                        case Token.TokenType.Variable:
-                            
-                            var length = 0;
-                            while (length < 32 && token.VariableName[length] != '\0')
-                            {
-                                length++;
+                        case TokenType.Variable:
+                            if (!ValueProviderContext.TryGetValue(token.Variable, out var variableValue)) {
+                                throw new InvalidOperationException("Variable not found. variableName:" + token.Variable);
                             }
-                            
-                            var name = new Span<char>(token.VariableName, length);
-                            if (!ValueProviderContext.TryGetValue(name, out var variableValue)) {
-                                throw new InvalidOperationException("Variable not found. variableName:" + name.ToString());
-                            }
+
                             stack[++top] = variableValue;
                             break;
-                        
-                        case Token.TokenType.Function when top + 1 < token.ArgCount:
+
+                        case TokenType.Function when top + 1 < token.Function.ArgCount:
                             throw new InvalidOperationException("Not enough values for function.");
 
-                        case Token.TokenType.Function: {
-                            var result = token.Invoke(stack, ref top);
+                        case TokenType.Function: {
+                            var result = token.Function.Invoke(stack, ref top);
                             stack[++top] = result;
                             break;
                         }
 
-                        case Token.TokenType.Operator when token.Operator == Token.OperatorType.UnaryMinus && top + 1 < 1:
+                        case TokenType.Operator when token.Operator == OperatorType.UnaryMinus && top + 1 < 1:
                             throw new InvalidOperationException("Not enough values for operator unary minus.");
-                        case Token.TokenType.Operator when token.Operator != Token.OperatorType.UnaryMinus && top + 1 < 2:
+                        case TokenType.Operator when token.Operator != OperatorType.UnaryMinus && top + 1 < 2:
                             throw new InvalidOperationException("Not enough values for operator.");
 
-                        case Token.TokenType.Operator when token.Operator == Token.OperatorType.UnaryMinus: {
+                        case TokenType.Operator when token.Operator == OperatorType.UnaryMinus: {
                             stack[top] = -stack[top];
                             break;
                         }
 
-                        case Token.TokenType.Operator: {
+                        case TokenType.Operator: {
                             var right = stack[top--];
                             var left  = stack[top--];
 
-                            stack[++top] = token.Operator switch {
-                                Token.OperatorType.Add      => left + right,
-                                Token.OperatorType.Subtract => left - right,
-                                Token.OperatorType.Multiply => left * right,
-                                Token.OperatorType.Divide   => left / right,
-                                Token.OperatorType.Power    => Math.Pow(left, right),
-                                _                           => throw new Exception("unknown oper " + token.Operator)
+                            stack[++top] = token.Operator.Type switch {
+                                OperatorType.Add      => left + right,
+                                OperatorType.Subtract => left - right,
+                                OperatorType.Multiply => left * right,
+                                OperatorType.Divide   => left / right,
+                                OperatorType.Power    => Math.Pow(left, right),
+                                _                     => throw new Exception("unknown oper " + token.Operator)
                             };
                             break;
                         }

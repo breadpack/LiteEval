@@ -1,0 +1,27 @@
+namespace LiteEval.Enums {
+    public enum FunctionType : byte {
+        Abs,
+        Acos,
+        Asin,
+        Atan,
+        Ceiling,
+        Cos,
+        Cosh,
+        Exp,
+        Floor,
+        Log,
+        Log10,
+        Round,
+        Sign,
+        Sin,
+        Sinh,
+        Sqrt,
+        Tan,
+        Tanh,
+        Truncate,
+        Atan2,
+        Max,
+        Min,
+        Pow,
+    }
+}

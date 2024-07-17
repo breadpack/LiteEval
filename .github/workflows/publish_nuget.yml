@@ -2,9 +2,8 @@ name: Build and publish NuGet package
 
 on:
   push:
-    branches: [ main ]
-    paths:
-      - 'Solution/LiteEval.csproj'
+    tags:
+      - 'v*.*.*'
   workflow_dispatch: # This line allows manual triggering
 
 jobs:
@@ -19,7 +18,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v2
         with:
-          dotnet-version: '7.0.x'
+          dotnet-version: '8.0.x'
 
       - name: Restore dependencies
         run: dotnet restore Solution/LiteEval.sln
@@ -32,8 +31,8 @@ jobs:
 
       - name: Copy DLL and PDB to Unity package
         run: |
-          cp Solution/bin/Release/netstandard2.1/*.dll LiteEval/Runtime/
-          cp Solution/bin/Release/netstandard2.1/*.pdb LiteEval/Runtime/
+          cp Solution/bin/Release/netstandard2.1/*.dll UnityPackage/Runtime/
+          cp Solution/bin/Release/netstandard2.1/*.pdb UnityPackage/Runtime/
 
       - name: Commit files
         run: |
@@ -46,11 +45,7 @@ jobs:
           
       - name: Pack
         run: dotnet pack Solution/LiteEval.csproj --configuration Release --no-build --output ./nupkgs
-        
-      - name: Add GitHub Source
-        run: dotnet nuget add source "https://nuget.pkg.github.com/startergames/index.json" --name "github" --username OWNER --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text
 
-      - name: Publish to GitHub Packages
-        run: dotnet nuget push ./nupkgs/*.nupkg --source "github" --skip-duplicate
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish the package
+        run: dotnet nuget push ./nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+

@@ -1,5 +1,5 @@
 {
-    "name": "com.startergames.liteeval",
+    "name": "dev.breadpack.liteeval",
     "version": "1.0.0",
     "displayName": "LiteEval",
     "description": "lite-weight expression evaluator",
@@ -12,8 +12,8 @@
         "evaluator"
     ],
     "author": {
-        "name": "Starter Games",
-        "email": "developer@startergames.com",
-        "url": "https://www.startergames.com"
+        "name": "BreadPack",
+        "email": "milennium9@gmail.com",
+        "url": "https://github.com/breadpack/LiteEval"
     }
 }
