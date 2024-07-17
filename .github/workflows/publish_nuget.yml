@@ -38,8 +38,8 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add LiteEval/package.json
-          git add LiteEval/Runtime/
+          git add UnityPackage/package.json
+          git add UnityPackage/Runtime/
           git diff --staged --quiet || git commit -m "Update Unity package binaries" || echo "No changes to commit"
           git push
           
