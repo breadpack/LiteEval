@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace LiteEval {
@@ -10,6 +10,8 @@ namespace LiteEval {
         public void Insert(ReadOnlySpan<char> word, double value) {
             var current = this;
             foreach (var ch in word) {
+                if (ch == '\0') break;
+
                 if (!current.Children.ContainsKey(ch)) {
                     current.Children[ch] = new();
                 }
@@ -24,6 +26,8 @@ namespace LiteEval {
         public bool TryGetValue(ReadOnlySpan<char> word, out double value) {
             var current = this;
             foreach (var ch in word) {
+                if (ch == '\0') break;
+
                 if (!current.Children.TryGetValue(ch, out current)) {
                     value = default;
                     return false;
@@ -37,32 +41,6 @@ namespace LiteEval {
 
             value = 0;
             return false;
-        }
-        
-    }
-    internal class _DefaultValueProvider : IValueProvider {
-        private readonly TrieNode trie = new();
-
-        public double this[ReadOnlyMemory<char> name] {
-            get => TryGetValue(name, out var value) ? value : 0;
-            set => trie.Insert(name.Span, value);
-        }
-
-        public bool TryGetValue(ReadOnlyMemory<char> name, out double value) {
-            return trie.TryGetValue(name.Span, out value);
-        }
-    }
-
-    public class ValueProvider : IValueProvider {
-        private readonly TrieNode trie = new();
-        
-        public ValueProvider Add(string name, double value) {
-            trie.Insert(name.AsSpan(), value);
-            return this;
-        }
-        
-        public bool TryGetValue(ReadOnlyMemory<char> name, out double value) {
-            return trie.TryGetValue(name.Span, out value);
         }
     }
 }

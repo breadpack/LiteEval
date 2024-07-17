@@ -20,26 +20,29 @@ public class ExpressionBenchmark {
     public void Setup() {
         _expression             = new Expression("2 * 3 + (4 - 1) ^ 2");
         _expressionComplex      = new Expression("3*x^2 + 2*y + z + sin(w) + cos(v) + tan(u) - log(t) + sqrt(s) + atan2(r, q) - max(p, o) + min(n, m) + abs(l) + round(k) + floor(j) + ceiling(i) - truncate(h) + sign(g)");
-        _expressionComplex["x"] = 5;
-        _expressionComplex["y"] = 3.14;
-        _expressionComplex["z"] = 2.71;
-        _expressionComplex["w"] = 1.57;
-        _expressionComplex["v"] = 0;
-        _expressionComplex["u"] = 45;
-        _expressionComplex["t"] = 10;
-        _expressionComplex["s"] = 16;
-        _expressionComplex["r"] = 2;
-        _expressionComplex["q"] = 3;
-        _expressionComplex["p"] = 5;
-        _expressionComplex["o"] = 6;
-        _expressionComplex["n"] = 7;
-        _expressionComplex["m"] = 8;
-        _expressionComplex["l"] = -9;
-        _expressionComplex["k"] = 10.5;
-        _expressionComplex["j"] = 11.4;
-        _expressionComplex["i"] = 12.7;
-        _expressionComplex["h"] = 13.9;
-        _expressionComplex["g"] = -14;
+        ValueProviderContext.SetGlobalValueProvider(
+            new ValueProvider()
+                .Add("x", 5)
+                .Add("y", 3.14)
+                .Add("z", 2.71)
+                .Add("w", 1.57)
+                .Add("v", 0)
+                .Add("u", 45)
+                .Add("t", 10)
+                .Add("s", 16)
+                .Add("r", 2)
+                .Add("q", 3)
+                .Add("p", 5)
+                .Add("o", 6)
+                .Add("n", 7)
+                .Add("m", 8)
+                .Add("l", -9)
+                .Add("k", 10.5)
+                .Add("j", 11.4)
+                .Add("i", 12.7)
+                .Add("h", 13.9)
+                .Add("g", -14)
+            );
         _expressionCalc         = new ExpressionCalc("2 * 3 + (4 - 1) ^ 2");
     }
 
@@ -51,26 +54,29 @@ public class ExpressionBenchmark {
     [Benchmark]
     public void NewComplexExpression() {
         var _expressionComplex = new Expression("3*x^2 + 2*y + z + sin(w) + cos(v) + tan(u) - log(t) + sqrt(s) + atan2(r, q) - max(p, o) + min(n, m) + abs(l) + round(k) + floor(j) + ceiling(i) - truncate(h) + sign(g)");
-        _expressionComplex["x"] = 5;
-        _expressionComplex["y"] = 3.14;
-        _expressionComplex["z"] = 2.71;
-        _expressionComplex["w"] = 1.57;
-        _expressionComplex["v"] = 0;
-        _expressionComplex["u"] = 45;
-        _expressionComplex["t"] = 10;
-        _expressionComplex["s"] = 16;
-        _expressionComplex["r"] = 2;
-        _expressionComplex["q"] = 3;
-        _expressionComplex["p"] = 5;
-        _expressionComplex["o"] = 6;
-        _expressionComplex["n"] = 7;
-        _expressionComplex["m"] = 8;
-        _expressionComplex["l"] = -9;
-        _expressionComplex["k"] = 10.5;
-        _expressionComplex["j"] = 11.4;
-        _expressionComplex["i"] = 12.7;
-        _expressionComplex["h"] = 13.9;
-        _expressionComplex["g"] = -14;
+        using var context = new ValueProviderContext(
+            new ValueProvider()
+                .Add("x", 5)
+                .Add("y", 3.14)
+                .Add("z", 2.71)
+                .Add("w", 1.57)
+                .Add("v", 0)
+                .Add("u", 45)
+                .Add("t", 10)
+                .Add("s", 16)
+                .Add("r", 2)
+                .Add("q", 3)
+                .Add("p", 5)
+                .Add("o", 6)
+                .Add("n", 7)
+                .Add("m", 8)
+                .Add("l", -9)
+                .Add("k", 10.5)
+                .Add("j", 11.4)
+                .Add("i", 12.7)
+                .Add("h", 13.9)
+                .Add("g", -14)
+        );
     }
 
     [Benchmark]

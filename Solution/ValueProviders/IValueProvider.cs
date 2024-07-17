@@ -2,6 +2,6 @@
 
 namespace LiteEval {
     public interface IValueProvider {
-        public bool TryGetValue(ReadOnlyMemory<char> name, out double value);
+        public bool TryGetValue(ReadOnlySpan<char> name, out double value);
     }
 }
