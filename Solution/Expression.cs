@@ -96,6 +96,10 @@ namespace LiteEval {
 
         public double GetResult() {
             unsafe {
+                if (Tokens == null || Tokens.Length == 0) {
+                    return 0;
+                }
+                
                 var stack = stackalloc double[Tokens.Length];
                 var top   = -1;
 
