@@ -20,6 +20,13 @@ namespace LiteEval.Tokens {
             return token;
         }
 
+        internal static Token CreateValueToken(double d) {
+            return new Token {
+                Type  = TokenType.Value,
+                Value = new() { Value = d }
+            };
+        }
+
         internal static Token CreateVariableToken(ReadOnlySpan<char> str) {
             var token = new Token {
                 Type = TokenType.Variable,

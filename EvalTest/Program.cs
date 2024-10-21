@@ -40,7 +40,7 @@ public class Tests {
         var expression4 = new Expression("(2-2)");
         var expression5 = new Expression("2^2");
         
-        Assert.AreEqual(-3, ((expression1 / expression2) * expression3 + (expression4 - expression5)).Result);
+        Assert.AreEqual(-7, ((expression1 / expression2) * expression3 + (expression4 - expression5) * 2).Result);
     }
 
     [Test]

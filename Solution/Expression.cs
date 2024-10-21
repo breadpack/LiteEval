@@ -20,6 +20,10 @@ namespace LiteEval {
             Tokens = Tokenize(expr);
         }
 
+        public Expression(double value) {
+            Tokens = new[] { Token.CreateValueToken(value) };
+        }
+
         private static Token[] Tokenize(ReadOnlySpan<char> expression) {
             var    tokens        = new List<Token>();
             var    stack         = new Stack<Token>();
@@ -168,6 +172,12 @@ namespace LiteEval {
         public static Expression operator *(Expression left, Expression right) => CombineTokens(left, right, OperatorType.Multiply);
         public static Expression operator /(Expression left, Expression right) => CombineTokens(left, right, OperatorType.Divide);
         public static Expression operator ^(Expression left, Expression right) => CombineTokens(left, right, OperatorType.Power);
+        
+        public static Expression operator +(Expression left, double right) => left + new Expression(right);
+        public static Expression operator -(Expression left, double right) => left - new Expression(right);
+        public static Expression operator *(Expression left, double right) => left * new Expression(right);
+        public static Expression operator /(Expression left, double right) => left / new Expression(right);
+        public static Expression operator ^(Expression left, double right) => left ^ new Expression(right);
         
         private static Expression CombineTokens(Expression left, Expression right, OperatorType operatorType) {
             if (left.Tokens == null || left.Tokens.Length == 0) {
