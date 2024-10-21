@@ -170,6 +170,13 @@ namespace LiteEval {
         public static Expression operator ^(Expression left, Expression right) => CombineTokens(left, right, OperatorType.Power);
         
         private static Expression CombineTokens(Expression left, Expression right, OperatorType operatorType) {
+            if (left.Tokens == null || left.Tokens.Length == 0) {
+                return right;
+            }
+            if (right.Tokens == null || right.Tokens.Length == 0) {
+                return left;
+            }
+            
             var combinedTokens = new Token[left.Tokens.Length + right.Tokens.Length + 1];
             left.Tokens.CopyTo(combinedTokens, 0);
             right.Tokens.CopyTo(combinedTokens, left.Tokens.Length);
