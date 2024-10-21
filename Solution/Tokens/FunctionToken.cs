@@ -4,7 +4,7 @@ using LiteEval.Enums;
 
 namespace LiteEval.Tokens {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public unsafe struct FunctionToken {
+    public unsafe struct FunctionToken : IEquatable<FunctionToken> {
         public FunctionType Type;
 
         public int ArgCount
@@ -86,6 +86,26 @@ namespace LiteEval.Tokens {
                 default:
                     throw new("unknown function");
             }
+        }
+
+        public bool Equals(FunctionToken other) {
+            return Type == other.Type;
+        }
+
+        public override bool Equals(object obj) {
+            return obj is FunctionToken other && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            return (int)Type;
+        }
+
+        public static bool operator ==(FunctionToken left, FunctionToken right) {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(FunctionToken left, FunctionToken right) {
+            return !left.Equals(right);
         }
     }
 }

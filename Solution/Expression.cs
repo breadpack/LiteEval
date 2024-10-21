@@ -176,5 +176,31 @@ namespace LiteEval {
             combinedTokens[left.Tokens.Length + right.Tokens.Length] = Token.CreateOperatorToken(operatorType);
             return new() { Tokens = combinedTokens };
         }
+
+        public override bool Equals(object obj) {
+            if (obj is Expression other) {
+                if (Tokens.Length != other.Tokens.Length) {
+                    return false;
+                }
+                for (int i = 0; i < Tokens.Length; i++) {
+                    if (!Tokens[i].Equals(other.Tokens[i])) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public override int GetHashCode() {
+            var hash = 17;
+            foreach (var token in Tokens) {
+                hash = hash * 31 + token.GetHashCode();
+            }
+            return hash;
+        }
+
+        public static bool operator ==(Expression left, Expression right) => Math.Abs(left.GetResult() - right.GetResult()) < double.Epsilon;
+        public static bool operator !=(Expression left, Expression right) => !(left == right);
     }
 }

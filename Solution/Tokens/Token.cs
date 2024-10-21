@@ -4,7 +4,7 @@ using LiteEval.Enums;
 
 namespace LiteEval.Tokens {
     [StructLayout(LayoutKind.Explicit, Pack = 1)]
-    internal unsafe struct Token {
+    internal unsafe struct Token : IEquatable<Token> {
         [FieldOffset(0)] public TokenType     Type;
         [FieldOffset(1)] public ValueToken    Value;
         [FieldOffset(1)] public VariableToken Variable;
@@ -53,10 +53,8 @@ namespace LiteEval.Tokens {
 
         internal static Token CreateOperatorToken(OperatorType operatorType) {
             return new Token {
-                Type = TokenType.Operator,
-                Operator = new() {
-                    Type = operatorType
-                }
+                Type     = TokenType.Operator,
+                Operator = new() { Type = operatorType }
             };
         }
 
@@ -65,6 +63,45 @@ namespace LiteEval.Tokens {
                 Type     = TokenType.Operator,
                 Operator = new() { Type = OperatorType.UnaryMinus },
             };
+        }
+
+        public bool Equals(Token other) {
+            return Type == other.Type
+                && Type switch {
+                       TokenType.Value            => Value.Equals(other.Value),
+                       TokenType.Variable         => Variable.Equals(other.Variable),
+                       TokenType.Function         => Function.Equals(other.Function),
+                       TokenType.Operator         => Operator.Equals(other.Operator),
+                       TokenType.OpenParenthesis  => true,
+                       TokenType.CloseParenthesis => true,
+                       _                          => false
+                   };
+        }
+
+        public override bool Equals(object obj) {
+            return obj is Token other && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(
+                (int)Type,
+                Type switch {
+                    TokenType.Value            => Value.GetHashCode(),
+                    TokenType.Variable         => Variable.GetHashCode(),
+                    TokenType.Function         => Function.GetHashCode(),
+                    TokenType.Operator         => Operator.GetHashCode(),
+                    TokenType.OpenParenthesis  => 0,
+                    TokenType.CloseParenthesis => 0,
+                    _                          => 0
+                });
+        }
+
+        public static bool operator ==(Token left, Token right) {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Token left, Token right) {
+            return !left.Equals(right);
         }
     }
 }
