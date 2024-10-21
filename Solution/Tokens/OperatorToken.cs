@@ -4,7 +4,7 @@ using LiteEval.Enums;
 
 namespace LiteEval.Tokens {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct OperatorToken : IEquatable<OperatorToken> {
+    internal struct OperatorToken : IEquatable<OperatorToken> {
         public OperatorType Type;
         
         public static implicit operator OperatorType(OperatorToken token) {
@@ -21,6 +21,28 @@ namespace LiteEval.Tokens {
                 OperatorType.UnaryMinus => 4,
                 _                       => 0
             };
+        
+        public char Symbol
+            => Type switch {
+                OperatorType.Add        => '+',
+                OperatorType.Subtract   => '-',
+                OperatorType.Multiply   => '*',
+                OperatorType.Divide     => '/',
+                OperatorType.Power      => '^',
+                OperatorType.UnaryMinus => '-',
+                _                       => throw new ArgumentOutOfRangeException()
+            };
+        
+        public Associativity Associativity
+         => Type switch {
+             OperatorType.Add        => Associativity.Left,
+             OperatorType.Subtract   => Associativity.Left,
+             OperatorType.Multiply   => Associativity.Left,
+             OperatorType.Divide     => Associativity.Left,
+             OperatorType.Power      => Associativity.Right,
+             OperatorType.UnaryMinus => Associativity.Right,
+             _                       => throw new ArgumentOutOfRangeException()
+         };
 
         public bool Equals(OperatorToken other) {
             return Type == other.Type;
@@ -40,6 +62,10 @@ namespace LiteEval.Tokens {
 
         public static bool operator !=(OperatorToken left, OperatorToken right) {
             return !left.Equals(right);
+        }
+        
+        public override string ToString() {
+            return Symbol.ToString();
         }
     }
 }

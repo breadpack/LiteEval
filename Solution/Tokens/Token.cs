@@ -79,8 +79,6 @@ namespace LiteEval.Tokens {
                        TokenType.Variable         => Variable.Equals(other.Variable),
                        TokenType.Function         => Function.Equals(other.Function),
                        TokenType.Operator         => Operator.Equals(other.Operator),
-                       TokenType.OpenParenthesis  => true,
-                       TokenType.CloseParenthesis => true,
                        _                          => false
                    };
         }
@@ -97,8 +95,6 @@ namespace LiteEval.Tokens {
                     TokenType.Variable         => Variable.GetHashCode(),
                     TokenType.Function         => Function.GetHashCode(),
                     TokenType.Operator         => Operator.GetHashCode(),
-                    TokenType.OpenParenthesis  => 0,
-                    TokenType.CloseParenthesis => 0,
                     _                          => 0
                 });
         }

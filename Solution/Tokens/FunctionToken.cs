@@ -4,7 +4,7 @@ using LiteEval.Enums;
 
 namespace LiteEval.Tokens {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public unsafe struct FunctionToken : IEquatable<FunctionToken> {
+    internal unsafe struct FunctionToken : IEquatable<FunctionToken> {
         public FunctionType Type;
 
         public int ArgCount
@@ -106,6 +106,10 @@ namespace LiteEval.Tokens {
 
         public static bool operator !=(FunctionToken left, FunctionToken right) {
             return !left.Equals(right);
+        }
+        
+        public override string ToString() {
+            return Type.ToString();
         }
     }
 }

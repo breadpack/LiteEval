@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace LiteEval.Tokens {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public unsafe struct VariableToken : IEquatable<VariableToken> {
+    internal unsafe struct VariableToken : IEquatable<VariableToken> {
         public fixed char Name[32];
         
         public static implicit operator ReadOnlySpan<char>(VariableToken token) {
@@ -16,7 +16,14 @@ namespace LiteEval.Tokens {
         }
 
         public override string ToString() {
-            return ((ReadOnlySpan<char>)this).ToString();
+            fixed(char* name = Name) {
+                var length = 0;
+                while (length < 32 && Name[length] != '\0') {
+                    length++;
+                }
+
+                return new(name, 0, length);
+            }
         }
 
         public bool Equals(VariableToken other) {

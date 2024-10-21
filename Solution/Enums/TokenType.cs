@@ -4,7 +4,5 @@ namespace LiteEval.Enums {
         Operator,
         Variable,
         Function,
-        OpenParenthesis,
-        CloseParenthesis,
     }
 }
