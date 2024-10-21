@@ -28,7 +28,19 @@ public class Tests {
 
     [Test]
     public void SimpleMath() {
-        Assert.AreEqual(5, new Expression("2*5-20/4").Result);
+        var expression = new Expression("2*5-20/4");
+        Assert.AreEqual(5, expression.Result);
+    }
+
+    [Test]
+    public void ExpressionCalcuation() {
+        var expression1 = new Expression("2+2");
+        var expression2 = new Expression("2*2");
+        var expression3 = new Expression("2/2");
+        var expression4 = new Expression("(2-2)");
+        var expression5 = new Expression("2^2");
+        
+        Assert.AreEqual(-3, ((expression1 / expression2) * expression3 + (expression4 - expression5)).Result);
     }
 
     [Test]

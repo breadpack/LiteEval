@@ -14,7 +14,7 @@ namespace LiteEval {
 
         private static readonly char exponentChar = 'E';
 
-        public Token[] Tokens;
+        internal Token[] Tokens;
 
         public Expression(ReadOnlySpan<char> expr) {
             Tokens = Tokenize(expr);
@@ -22,10 +22,10 @@ namespace LiteEval {
 
         private static Token[] Tokenize(ReadOnlySpan<char> expression) {
             var    tokens        = new List<Token>();
-            var    m             = Regex.Match(expression.ToString());
-            Token? previousToken = null;
             var    stack         = new Stack<Token>();
+            Token? previousToken = null;
 
+            var m = Regex.Match(expression.ToString());
             while (m.Success) {
                 var slice = expression.Slice(m.Index, m.Length);
 
@@ -158,5 +158,19 @@ namespace LiteEval {
         }
 
         public double Result => GetResult();
+        
+        public static Expression operator +(Expression left, Expression right) => CombineTokens(left, right, OperatorType.Add);
+        public static Expression operator -(Expression left, Expression right) => CombineTokens(left, right, OperatorType.Subtract);
+        public static Expression operator *(Expression left, Expression right) => CombineTokens(left, right, OperatorType.Multiply);
+        public static Expression operator /(Expression left, Expression right) => CombineTokens(left, right, OperatorType.Divide);
+        public static Expression operator ^(Expression left, Expression right) => CombineTokens(left, right, OperatorType.Power);
+        
+        private static Expression CombineTokens(Expression left, Expression right, OperatorType operatorType) {
+            var combinedTokens = new Token[left.Tokens.Length + right.Tokens.Length + 1];
+            left.Tokens.CopyTo(combinedTokens, 0);
+            right.Tokens.CopyTo(combinedTokens, left.Tokens.Length);
+            combinedTokens[left.Tokens.Length + right.Tokens.Length] = Token.CreateOperatorToken(operatorType);
+            return new() { Tokens = combinedTokens };
+        }
     }
 }

@@ -4,14 +4,14 @@ using LiteEval.Enums;
 
 namespace LiteEval.Tokens {
     [StructLayout(LayoutKind.Explicit, Pack = 1)]
-    public unsafe struct Token {
+    internal unsafe struct Token {
         [FieldOffset(0)] public TokenType     Type;
         [FieldOffset(1)] public ValueToken    Value;
         [FieldOffset(1)] public VariableToken Variable;
         [FieldOffset(1)] public FunctionToken Function;
         [FieldOffset(1)] public OperatorToken Operator;
 
-        public static Token CreateValueToken(ReadOnlySpan<char> str) {
+        internal static Token CreateValueToken(ReadOnlySpan<char> str) {
             var value = double.Parse(str);
             var token = new Token {
                 Type  = TokenType.Value,
@@ -20,7 +20,7 @@ namespace LiteEval.Tokens {
             return token;
         }
 
-        public static Token CreateVariableToken(ReadOnlySpan<char> str) {
+        internal static Token CreateVariableToken(ReadOnlySpan<char> str) {
             var token = new Token {
                 Type = TokenType.Variable,
             };
@@ -28,7 +28,7 @@ namespace LiteEval.Tokens {
             return token;
         }
 
-        public static Token CreateFunctionToken(ReadOnlySpan<char> str) {
+        internal static Token CreateFunctionToken(ReadOnlySpan<char> str) {
             var token = new Token {
                 Type     = TokenType.Function,
                 Function = new() { Type = Enum.Parse<FunctionType>(str.ToString(), true) }
@@ -36,28 +36,31 @@ namespace LiteEval.Tokens {
             return token;
         }
 
-        public static Token CreateOperatorToken(char c) {
-            var token = new Token {
-                Type = TokenType.Operator,
-                Operator = new() {
-                    Type = c switch {
-                        '+' => OperatorType.Add,
-                        '-' => OperatorType.Subtract,
-                        '*' => OperatorType.Multiply,
-                        '/' => OperatorType.Divide,
-                        '^' => OperatorType.Power,
-                        '(' => OperatorType.ParenthesisStart,
-                        ')' => OperatorType.ParenthesisEnd,
-                        ',' => OperatorType.Comma,
-                        _   => throw new Exception("unknown oper " + c)
-                    }
-                }
+        internal static Token CreateOperatorToken(char c) {
+            var operatorType = c switch {
+                '+' => OperatorType.Add,
+                '-' => OperatorType.Subtract,
+                '*' => OperatorType.Multiply,
+                '/' => OperatorType.Divide,
+                '^' => OperatorType.Power,
+                '(' => OperatorType.ParenthesisStart,
+                ')' => OperatorType.ParenthesisEnd,
+                ',' => OperatorType.Comma,
+                _   => throw new Exception("unknown oper " + c)
             };
-
-            return token;
+            return CreateOperatorToken(operatorType);
         }
 
-        public static Token CreateUnaryMinusToken() {
+        internal static Token CreateOperatorToken(OperatorType operatorType) {
+            return new Token {
+                Type = TokenType.Operator,
+                Operator = new() {
+                    Type = operatorType
+                }
+            };
+        }
+
+        internal static Token CreateUnaryMinusToken() {
             return new Token {
                 Type     = TokenType.Operator,
                 Operator = new() { Type = OperatorType.UnaryMinus },
