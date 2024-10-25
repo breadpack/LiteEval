@@ -16,6 +16,7 @@ public class MockValueProvider : IValueProvider {
     }
 }
 
+
 [TestFixture]
 public class Tests {
     private IValueProvider _valueProvider = null;
