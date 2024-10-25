@@ -207,7 +207,7 @@ namespace LiteEval {
 
         public override string ToString() {
             // 최대 필요 길이를 추정합니다.
-            int estimatedLength = Tokens.Length * 16; // 토큰당 평균 길이를 고려하여 조정하세요.
+            int estimatedLength = Tokens.Length * 64; // 토큰당 평균 길이를 고려하여 조정하세요.
 
             // 미리 할당된 버퍼를 생성합니다.
             var buffer    = new char[estimatedLength];
