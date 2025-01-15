@@ -75,14 +75,26 @@ namespace LiteEval.Tokens {
                     return Math.Tanh(stack[top--]);
                 case FunctionType.Truncate:
                     return Math.Truncate(stack[top--]);
-                case FunctionType.Atan2:
-                    return Math.Atan2(stack[top--], stack[top--]);
-                case FunctionType.Max:
-                    return Math.Max(stack[top--], stack[top--]);
-                case FunctionType.Min:
-                    return Math.Min(stack[top--], stack[top--]);
-                case FunctionType.Pow:
-                    return Math.Pow(stack[top--], stack[top--]);
+                case FunctionType.Atan2: {
+                    var rhs = stack[top--];
+                    var lhs = stack[top--];
+                    return Math.Atan2(lhs, rhs);
+                }
+                case FunctionType.Max: {
+                    var rhs = stack[top--];
+                    var lhs = stack[top--];
+                    return Math.Max(lhs, rhs);
+                }
+                case FunctionType.Min: {
+                    var rhs = stack[top--];
+                    var lhs = stack[top--];
+                    return Math.Min(lhs, rhs);
+                }
+                case FunctionType.Pow: {
+                    var rhs = stack[top--];
+                    var lhs = stack[top--];
+                    return Math.Pow(lhs, rhs);
+                }
                 default:
                     throw new("unknown function");
             }

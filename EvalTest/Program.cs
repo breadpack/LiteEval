@@ -209,4 +209,193 @@ public class Tests {
             }
         }
     }
+
+    [Test]
+    public void TestComplex2() {
+        using var valueContext = new ValueProviderContext(
+            new ValueProvider()
+                .Add("level", 1)
+        );
+        var exp = new Expression("floor(Pow(10, 1 + 8.5 * (1 - Exp(-0.95 * {level} / 1000)) + 0.00035 * {level} + 2.5 * Log10({level} / 1000 + 1)))");
+        
+        Assert.AreEqual(exp.Result, 10.0);
+    }
+
+    [Test]
+    public void TestSmallNumber() {
+        var smallNumber = 0.00000056789;
+        var exp = new Expression($"abs({smallNumber:R})");
+        var expected = Math.Abs(smallNumber);
+        Assert.AreEqual(expected, exp.Result);
+    }
+
+    [Test]
+    public void TestFunctions() {
+        var random = new Random((int)DateTime.Now.Ticks);
+        
+        // test abs
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"abs({value})");
+            Assert.AreEqual(Math.Abs(value), exp.Result);
+        }
+        
+        // test acos
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"acos({value})");
+            Assert.AreEqual(Math.Acos(value), exp.Result);
+        }
+        
+        // test asin
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"asin({value})");
+            Assert.AreEqual(Math.Asin(value), exp.Result);
+        }
+        
+        // test atan
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"atan({value})");
+            Assert.AreEqual(Math.Atan(value), exp.Result);
+        }
+        
+        // test ceil
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"ceiling({value})");
+            Assert.AreEqual(Math.Ceiling(value), exp.Result);
+        }
+        
+        // test cos
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"cos({value})");
+            Assert.AreEqual(Math.Cos(value), exp.Result);
+        }
+        
+        // test cosh
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"cosh({value})");
+            Assert.AreEqual(Math.Cosh(value), exp.Result);
+        }
+        
+        // test exp
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"exp({value})");
+            Assert.AreEqual(Math.Exp(value), exp.Result);
+        }
+        
+        // test floor
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"floor({value})");
+            Assert.AreEqual(Math.Floor(value), exp.Result);
+        }
+        
+        // test log
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"log({value})");
+            Assert.AreEqual(Math.Log(value), exp.Result);
+        }
+        
+        // test log10
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"log10({value})");
+            Assert.AreEqual(Math.Log10(value), exp.Result);
+        }
+        
+        // test round
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"round({value})");
+            Assert.AreEqual(Math.Round(value), exp.Result);
+        }
+        
+        // test sign
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"sign({value})");
+            Assert.AreEqual(Math.Sign(value), exp.Result);
+        }
+        
+        // test sin
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"sin({value})");
+            Assert.AreEqual(Math.Sin(value), exp.Result);
+        }
+        
+        // test sinh
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"sinh({value})");
+            Assert.AreEqual(Math.Sinh(value), exp.Result);
+        }
+        
+        // test sqrt
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"sqrt({value})");
+            Assert.AreEqual(Math.Sqrt(value), exp.Result);
+        }
+        
+        // test tan
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"tan({value})");
+            Assert.AreEqual(Math.Tan(value), exp.Result);
+        }
+        
+        // test tanh
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"tanh({value})");
+            Assert.AreEqual(Math.Tanh(value), exp.Result);
+        }
+        
+        // test truncate
+        for (int i = 0; i < 1000; ++i) {
+            var value = random.NextDouble();
+            var exp = new Expression($"truncate({value})");
+            Assert.AreEqual(Math.Truncate(value), exp.Result);
+        }
+        
+        // test atan2
+        for (int i = 0; i < 1000; ++i) {
+            var value1 = random.NextDouble();
+            var value2 = random.NextDouble();
+            var exp = new Expression($"atan2({value1}, {value2})");
+            Assert.AreEqual(Math.Atan2(value1, value2), exp.Result);
+        }
+        
+        // test max
+        for (int i = 0; i < 1000; ++i) {
+            var value1 = random.NextDouble();
+            var value2 = random.NextDouble();
+            var exp = new Expression($"max({value1}, {value2})");
+            Assert.AreEqual(Math.Max(value1, value2), exp.Result);
+        }
+        
+        // test min
+        for (int i = 0; i < 1000; ++i) {
+            var value1 = random.NextDouble();
+            var value2 = random.NextDouble();
+            var exp = new Expression($"min({value1}, {value2})");
+            Assert.AreEqual(Math.Min(value1, value2), exp.Result);
+        }
+        
+        // test pow
+        for (int i = 0; i < 1000; ++i) {
+            var value1 = random.NextDouble();
+            var value2 = random.NextDouble();
+            var exp = new Expression($"pow({value1}, {value2})");
+            Assert.AreEqual(Math.Pow(value1, value2), exp.Result);
+        }
+    }
 }
