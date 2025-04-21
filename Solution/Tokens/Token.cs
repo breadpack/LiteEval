@@ -12,7 +12,7 @@ namespace LiteEval.Tokens {
         [FieldOffset(1)] public OperatorToken Operator;
 
         internal static Token CreateValueToken(ReadOnlySpan<char> str) {
-            var value = double.Parse(str);
+            var value = str.IsEmpty ? 0 : double.Parse(str);
             var token = new Token {
                 Type  = TokenType.Value,
                 Value = new() { Value = value },
