@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using LiteEval.Enums;
 using LiteEval.Tokens;
+using LiteEval.Utility;
 
 namespace LiteEval {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -26,8 +27,9 @@ namespace LiteEval {
         }
 
         private static Token[] Tokenize(ReadOnlySpan<char> expression) {
-            var    tokens        = new List<Token>();
-            var    stack         = new Stack<Token>();
+            var    tokens        = ExpressionUtility<Token>.Rent();
+            var    stack         = ExpressionUtility<Token>.RentStack();
+            
             Token? previousToken = null;
 
             var m = Regex.Match(expression.ToString());
@@ -98,7 +100,10 @@ namespace LiteEval {
                 tokens.Add(stack.Pop());
             }
 
-            return tokens.ToArray();
+            var resultArray = tokens.ToArray();
+            ExpressionUtility<Token>.Return(tokens);
+            ExpressionUtility<Token>.ReturnStack(stack);
+            return resultArray;
         }
 
         private static bool IsUnaryOperator(char currentChar, Token? previousToken) {

@@ -1,4 +1,7 @@
 // Old code
+
+using LiteEval.Utility;
+
 public class ExpressionCalc {
     private string                     expression       = string.Empty;
     private Dictionary<string, double> epxxressionValue = new();
@@ -147,8 +150,8 @@ public class ExpressionCalc {
         return -1;
     }
 
-    private void GetToken(in string expression, out List<string> tokens) {
-        tokens = new List<string>();
+    private string[] GetToken(in string expression) {
+        var tokens = ExpressionUtility<string>.Rent();
         if (expression.Any(a => operatorChar.Any(r => r == a)) == false) {
             tokens.Add(expression);
         }
@@ -176,12 +179,16 @@ public class ExpressionCalc {
                 startIndex = i + 1;
             }
         }
+        
+        var resultArray = tokens.ToArray();
+        ExpressionUtility<string>.Return(tokens);
+        return resultArray;
     }
 
     private double Calc(string formula) {
         stackOper.Clear();
         stackValue.Clear();
-        GetToken(formula, out var toks);
+        var toks = GetToken(formula);
 
         foreach (var s in toks) {
             if (isOper(s)) {
