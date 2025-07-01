@@ -31,11 +31,9 @@ namespace LiteEval {
             var    stack         = ExpressionUtility<Token>.RentStack();
             
             Token? previousToken = null;
-
-            var m = Regex.Match(expression.ToString());
-            while (m.Success) {
-                var slice = expression.Slice(m.Index, m.Length);
-
+            var    expressionStr = expression.ToString();
+            foreach (Match  m in Regex.Matches(expressionStr)) {
+                var slice = expressionStr.AsSpan(m.Index, m.Length);
                 if (m.Groups["number"].Success) {
                     var token = Token.CreateValueToken(slice);
 
@@ -92,8 +90,6 @@ namespace LiteEval {
                         previousToken = operatorToken;
                     }
                 }
-
-                m = m.NextMatch();
             }
 
             while (stack.Count > 0) {

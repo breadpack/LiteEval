@@ -9,7 +9,7 @@
         <PackageId>dev.breadpack.LiteEval</PackageId>
         <Product>LiteEval</Product>
         <Description>This project is a lightweight expression evaluator for C#. It includes utilities for parsing and evaluating mathematical expressions.</Description>
-        <Version>1.0.6</Version>
+        <Version>1.0.7</Version>
         <Authors>BreadPack</Authors>
         <RepositoryUrl>https://github.com/breadpack/LiteEval</RepositoryUrl>
         <RepositoryType>github</RepositoryType>
