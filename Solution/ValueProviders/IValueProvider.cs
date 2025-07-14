@@ -3,5 +3,6 @@
 namespace LiteEval {
     public interface IValueProvider {
         public bool TryGetValue(ReadOnlySpan<char> name, out double value);
+        public void Clear();
     }
 }

@@ -14,6 +14,10 @@ public class MockValueProvider : IValueProvider {
         value = 0;
         return false;
     }
+
+    public void Clear() {
+        throw new NotImplementedException();
+    }
 }
 
 

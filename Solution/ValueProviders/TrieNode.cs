@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 namespace LiteEval {
     internal class TrieNode {
+        private static readonly Stack<TrieNode> _pool = new();
+
         private double                     Value       { get; set; }
         private bool                       IsEndOfWord { get; set; }
         private Dictionary<char, TrieNode> Children    { get; } = new();
@@ -13,7 +15,7 @@ namespace LiteEval {
                 if (ch == '\0') break;
 
                 if (!current.Children.ContainsKey(ch)) {
-                    current.Children[ch] = new();
+                    current.Children[ch] = Pop();
                 }
 
                 current = current.Children[ch];
@@ -42,5 +44,28 @@ namespace LiteEval {
             value = 0;
             return false;
         }
+
+        public void Clear() {
+            Value       = 0;
+            IsEndOfWord = false;
+            foreach (var element in Children) {
+                Push(element.Value);
+            }
+            Children.Clear();
+        }
+
+        #region Pool
+
+        public static TrieNode Pop() {
+            if (_pool.Count <= 0) return new();
+            return _pool.Pop();
+        }
+
+        public static void Push(TrieNode element) {
+            element.Clear();
+            _pool.Push(element);
+        }
+
+        #endregion
     }
 }

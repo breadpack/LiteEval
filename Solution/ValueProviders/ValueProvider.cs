@@ -18,5 +18,9 @@ namespace LiteEval {
         public bool TryGetValue(ReadOnlySpan<char> name, out double value) {
             return trie.TryGetValue(name, out value);
         }
+
+        public void Clear() {
+            trie.Clear();
+        }
     }
 }

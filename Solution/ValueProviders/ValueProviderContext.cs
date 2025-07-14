@@ -5,20 +5,27 @@ using System.Threading;
 
 namespace LiteEval {
     public class ValueProviderContext : IDisposable {
+        private static readonly Stack<ValueProvider> _pool = new();
+        
         private static object _lock = new();
         private static IValueProvider _globalProvider = null;
 
         private static readonly AsyncLocal<Stack<IValueProvider>> _providers = new();
 
         public ValueProviderContext(IValueProvider provider) {
-            _providers.Value ??= new();
             _providers.Value.Push(provider);
+        }
+        
+        public ValueProvider SetValueProvider() {
+            var valueProvider = Pop();
+            _providers.Value.Push(valueProvider);
+            return valueProvider;
         }
 
         public void Dispose() {
-            _providers.Value.Pop();
-            if (_providers.Value.Count == 0) {
-                _providers.Value = null;
+            var providers = _providers.Value.Pop();
+            if (providers is ValueProvider valueProvider) {
+                Push(valueProvider);
             }
         }
 
@@ -46,5 +53,19 @@ namespace LiteEval {
             value = 0;
             return false;
         }
+        
+        
+        #region Pool
+
+        public static ValueProvider Pop() {
+            if (_pool.Count <= 0) return new();
+            return _pool.Pop();
+        }
+
+        public static void Push(ValueProvider element) {
+            element.Clear();
+            _pool.Push(element);
+        }
+        #endregion
     }
 }
