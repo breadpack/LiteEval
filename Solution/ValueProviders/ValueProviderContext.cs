@@ -12,6 +12,9 @@ namespace LiteEval {
 
         private static readonly AsyncLocal<Stack<IValueProvider>> _providers = new();
 
+        public ValueProviderContext() {
+        }
+        
         public ValueProviderContext(IValueProvider provider) {
             _providers.Value.Push(provider);
         }
