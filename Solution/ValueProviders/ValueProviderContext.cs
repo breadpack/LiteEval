@@ -9,9 +9,6 @@ namespace LiteEval {
         private static IValueProvider _globalProvider = null;
 
         private static readonly AsyncLocal<Stack<IValueProvider>> _providers = new();
-
-        public ValueProviderContext() {
-        }
         
         public ValueProviderContext(IValueProvider provider) {
             _providers.Value ??= new();
