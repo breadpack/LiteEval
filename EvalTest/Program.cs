@@ -230,6 +230,163 @@ public class Tests {
     }
 
     [Test]
+    public void TestBinaryRoundTrip() {
+        // Simple arithmetic
+        var expr1 = new Expression("2+3");
+        Assert.AreEqual(expr1, Expression.FromBytes(expr1.ToBytes()));
+
+        // Operators: add, subtract, multiply, divide, power
+        var expr2 = new Expression("(2*5)-(20/4)^2");
+        Assert.AreEqual(expr2, Expression.FromBytes(expr2.ToBytes()));
+
+        // Variables
+        var expr3 = new Expression("{x}*{y}");
+        Assert.AreEqual(expr3, Expression.FromBytes(expr3.ToBytes()));
+
+        // Functions (1-arg and 2-arg)
+        var expr4 = new Expression("sin(max(1,2))");
+        Assert.AreEqual(expr4, Expression.FromBytes(expr4.ToBytes()));
+
+        // Complex: all token types
+        var expr5 = new Expression("3*{x}^2 + sin({y}) - max({a}, {b})");
+        Assert.AreEqual(expr5, Expression.FromBytes(expr5.ToBytes()));
+
+        // Unary minus
+        var expr6 = new Expression("-5-5--5");
+        Assert.AreEqual(expr6, Expression.FromBytes(expr6.ToBytes()));
+
+        // Nested functions and operators
+        var expr7 = new Expression("-((3 + 5) * (7 - 2) / max(1, min(4, 2))) ^ 2");
+        Assert.AreEqual(expr7, Expression.FromBytes(expr7.ToBytes()));
+
+        // Constant expression
+        var expr8 = new Expression(42.5);
+        Assert.AreEqual(expr8, Expression.FromBytes(expr8.ToBytes()));
+
+        // Empty/default expression
+        var expr9 = default(Expression);
+        var restored9 = Expression.FromBytes(expr9.ToBytes());
+        Assert.AreEqual(0, restored9.Result);
+    }
+
+    [Test]
+    public void TestBinaryRoundTripResults() {
+        using var context = new ValueProviderContext(
+            new ValueProvider()
+                .Add("x", 5)
+                .Add("y", 3)
+                .Add("a", 10)
+                .Add("b", 20)
+        );
+
+        var expressions = new[] {
+            "2+3",
+            "{x}*{y}",
+            "sin(max(1,2))",
+            "3*{x}^2 + sin({y}) - max({a}, {b})",
+            "-5-5--5",
+            "-((3 + 5) * (7 - 2) / max(1, min(4, 2))) ^ 2",
+        };
+
+        foreach (var exprStr in expressions) {
+            var expr = new Expression(exprStr);
+            var restored = Expression.FromBytes(expr.ToBytes());
+            Assert.AreEqual(expr.Result, restored.Result, $"Round-trip failed for: {exprStr}");
+        }
+    }
+
+    [Test]
+    public void TestGetByteCount() {
+        // Empty expression
+        var empty = default(Expression);
+        Assert.AreEqual(3, empty.GetByteCount());
+        Assert.AreEqual(empty.ToBytes().Length, empty.GetByteCount());
+
+        // Simple arithmetic
+        var expr1 = new Expression("2+3");
+        Assert.AreEqual(expr1.ToBytes().Length, expr1.GetByteCount());
+
+        // Variables
+        var expr2 = new Expression("{x}*{y}");
+        Assert.AreEqual(expr2.ToBytes().Length, expr2.GetByteCount());
+
+        // Functions
+        var expr3 = new Expression("sin(max(1,2))");
+        Assert.AreEqual(expr3.ToBytes().Length, expr3.GetByteCount());
+
+        // Complex expression with all token types
+        var expr4 = new Expression("3*{x}^2 + sin({y}) - max({a}, {b})");
+        Assert.AreEqual(expr4.ToBytes().Length, expr4.GetByteCount());
+
+        // Constant
+        var expr5 = new Expression(42.5);
+        Assert.AreEqual(expr5.ToBytes().Length, expr5.GetByteCount());
+    }
+
+    [Test]
+    public void TestTryWriteBytes() {
+        var expr = new Expression("3*{x}^2 + sin({y})");
+        int size = expr.GetByteCount();
+
+        // Successful write
+        var buffer = new byte[size];
+        Assert.IsTrue(expr.TryWriteBytes(buffer, out int written));
+        Assert.AreEqual(size, written);
+
+        // Round-trip via TryWriteBytes
+        var restored = Expression.FromBytes(buffer.AsSpan(0, written));
+        Assert.AreEqual(expr, restored);
+
+        // Buffer too small → false
+        var smallBuffer = new byte[size - 1];
+        Assert.IsFalse(expr.TryWriteBytes(smallBuffer, out int notWritten));
+        Assert.AreEqual(0, notWritten);
+
+        // Empty expression
+        var empty = default(Expression);
+        var emptyBuf = new byte[3];
+        Assert.IsTrue(empty.TryWriteBytes(emptyBuf, out int emptyWritten));
+        Assert.AreEqual(3, emptyWritten);
+        Assert.AreEqual(0, Expression.FromBytes(emptyBuf).Result);
+
+        // Empty expression buffer too small
+        var tinyBuf = new byte[2];
+        Assert.IsFalse(empty.TryWriteBytes(tinyBuf, out _));
+    }
+
+    [Test]
+    public void TestTryWriteBytesRoundTrip() {
+        using var context = new ValueProviderContext(
+            new ValueProvider()
+                .Add("x", 5)
+                .Add("y", 3)
+                .Add("a", 10)
+                .Add("b", 20)
+        );
+
+        var expressions = new[] {
+            "2+3",
+            "{x}*{y}",
+            "sin(max(1,2))",
+            "3*{x}^2 + sin({y}) - max({a}, {b})",
+            "-5-5--5",
+            "-((3 + 5) * (7 - 2) / max(1, min(4, 2))) ^ 2",
+        };
+
+        foreach (var exprStr in expressions) {
+            var expr = new Expression(exprStr);
+            int size = expr.GetByteCount();
+            var buffer = new byte[size];
+            Assert.IsTrue(expr.TryWriteBytes(buffer, out int written), $"TryWriteBytes failed for: {exprStr}");
+            Assert.AreEqual(size, written, $"Written size mismatch for: {exprStr}");
+
+            var restored = Expression.FromBytes(buffer.AsSpan(0, written));
+            Assert.AreEqual(expr.Result, restored.Result, $"Round-trip result failed for: {exprStr}");
+            Assert.AreEqual(expr, restored, $"Round-trip equality failed for: {exprStr}");
+        }
+    }
+
+    [Test]
     public void TestFunctions() {
         var random = new Random((int)DateTime.Now.Ticks);
         
@@ -397,5 +554,155 @@ public class Tests {
             var exp = new Expression($"pow({value1}, {value2})");
             Assert.AreEqual(Math.Pow(value1, value2), exp.Result);
         }
+    }
+
+    [Test]
+    public void TestLongVariableName() {
+        var longName = "this_is_a_very_long_variable_name_that_exceeds_thirty_two_characters";
+        using var context = new ValueProviderContext(
+            new ValueProvider().Add(longName, 42.0));
+
+        var expr = new Expression($"{{{longName}}} + 1");
+        Assert.AreEqual(43.0, expr.Result);
+        Assert.AreEqual(1, expr.VariableCount);
+        Assert.AreEqual(longName, expr.GetVariableName(0));
+
+        // ToString round-trip
+        var str = expr.ToString();
+        Assert.IsTrue(str.Contains(longName));
+        var expr2 = new Expression(str);
+        Assert.AreEqual(expr.Result, expr2.Result);
+
+        // Binary round-trip
+        var bytes = expr.ToBytes();
+        var restored = Expression.FromBytes(bytes);
+        Assert.AreEqual(expr, restored);
+        Assert.AreEqual(expr.Result, restored.Result);
+    }
+
+    [Test]
+    public void TestVariableDeduplication() {
+        var expr = new Expression("{x}+{x}+{y}+{x}");
+        Assert.AreEqual(2, expr.VariableCount);
+        Assert.AreEqual("x", expr.GetVariableName(0));
+        Assert.AreEqual("y", expr.GetVariableName(1));
+    }
+
+    [Test]
+    public void TestGetResultWithValues() {
+        var expr = new Expression("{x}*{y}+{z}");
+        // VariableNames order: x=0, y=1, z=2
+        Assert.AreEqual(3, expr.VariableCount);
+
+        // x=2, y=3, z=4 → 2*3+4 = 10
+        Span<double> values = stackalloc double[] { 2.0, 3.0, 4.0 };
+        Assert.AreEqual(10.0, expr.GetResult(values));
+
+        // x=5, y=10, z=1 → 5*10+1 = 51
+        Span<double> values2 = stackalloc double[] { 5.0, 10.0, 1.0 };
+        Assert.AreEqual(51.0, expr.GetResult(values2));
+
+        // No-variable expression
+        var constExpr = new Expression("2+3");
+        Assert.AreEqual(5.0, constExpr.GetResult(ReadOnlySpan<double>.Empty));
+    }
+
+    [Test]
+    public void TestBinaryV2RoundTrip() {
+        using var context = new ValueProviderContext(
+            new ValueProvider()
+                .Add("alpha", 10)
+                .Add("beta", 20)
+        );
+
+        var expressions = new[] {
+            "2+3",
+            "{alpha}*{beta}",
+            "{alpha}+{alpha}+{beta}",
+            "sin(max(1,2))",
+            "3*{alpha}^2 + sin({beta}) - max({alpha}, {beta})",
+            "-5-5--5",
+        };
+
+        foreach (var exprStr in expressions) {
+            var expr = new Expression(exprStr);
+            var bytes = expr.ToBytes();
+
+            // Verify version byte is 2
+            Assert.AreEqual(2, bytes[0], $"Version byte should be 2 for: {exprStr}");
+
+            // Verify GetByteCount matches actual
+            Assert.AreEqual(bytes.Length, expr.GetByteCount(), $"GetByteCount mismatch for: {exprStr}");
+
+            // Round-trip
+            var restored = Expression.FromBytes(bytes);
+            Assert.AreEqual(expr, restored, $"Equality failed for: {exprStr}");
+            Assert.AreEqual(expr.Result, restored.Result, $"Result mismatch for: {exprStr}");
+            Assert.AreEqual(expr.VariableCount, restored.VariableCount, $"VariableCount mismatch for: {exprStr}");
+        }
+    }
+
+    [Test]
+    public void TestV1BackwardCompat() {
+        // Manually construct V1 bytes for "{x}+{y}"
+        // V1 format: [version=1][tokenCount:2][tokens...]
+        // Tokens in postfix: x y +
+        // TokenType: Value=0, Operator=1, Variable=2, Function=3
+        // Variable token V1: [type=2] [nameLen:1] [chars:nameLen*2]
+        // Operator token V1: [type=1] [opType:1]
+        var v1Bytes = new List<byte>();
+        v1Bytes.Add(1); // version
+        v1Bytes.AddRange(BitConverter.GetBytes((ushort)3)); // tokenCount = 3
+
+        // Token 0: Variable "x"
+        v1Bytes.Add(2); // TokenType.Variable
+        v1Bytes.Add(1); // nameLen = 1
+        v1Bytes.AddRange(BitConverter.GetBytes((ushort)'x'));
+
+        // Token 1: Variable "y"
+        v1Bytes.Add(2); // TokenType.Variable
+        v1Bytes.Add(1); // nameLen = 1
+        v1Bytes.AddRange(BitConverter.GetBytes((ushort)'y'));
+
+        // Token 2: Operator Add
+        v1Bytes.Add(1); // TokenType.Operator
+        v1Bytes.Add(0); // OperatorType.Add = 0
+
+        var expr = Expression.FromBytes(v1Bytes.ToArray());
+
+        using var context = new ValueProviderContext(
+            new ValueProvider().Add("x", 10).Add("y", 20));
+
+        Assert.AreEqual(30.0, expr.Result);
+        Assert.AreEqual(2, expr.VariableCount);
+        Assert.AreEqual("x", expr.GetVariableName(0));
+        Assert.AreEqual("y", expr.GetVariableName(1));
+        Assert.AreEqual("{x} + {y}", expr.ToString());
+    }
+
+    [Test]
+    public void TestCombineSharedVars() {
+        var left  = new Expression("{x}+{y}");
+        var right = new Expression("{y}+{z}");
+
+        Assert.AreEqual(2, left.VariableCount);  // x, y
+        Assert.AreEqual(2, right.VariableCount); // y, z
+
+        var combined = left + right;
+        Assert.AreEqual(3, combined.VariableCount); // x, y, z
+        Assert.AreEqual("x", combined.GetVariableName(0));
+        Assert.AreEqual("y", combined.GetVariableName(1));
+        Assert.AreEqual("z", combined.GetVariableName(2));
+
+        using var context = new ValueProviderContext(
+            new ValueProvider().Add("x", 1).Add("y", 2).Add("z", 3));
+
+        // (x+y) + (y+z) = (1+2) + (2+3) = 3+5 = 8
+        Assert.AreEqual(8.0, combined.Result);
+
+        // Binary round-trip
+        var restored = Expression.FromBytes(combined.ToBytes());
+        Assert.AreEqual(combined, restored);
+        Assert.AreEqual(combined.Result, restored.Result);
     }
 }

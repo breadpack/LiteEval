@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using LiteEval.Enums;
 
 namespace LiteEval.Tokens {
     [StructLayout(LayoutKind.Explicit, Pack = 1)]
-    internal unsafe struct Token : IEquatable<Token> {
+    internal struct Token : IEquatable<Token> {
         [FieldOffset(0)] public TokenType     Type;
         [FieldOffset(1)] public ValueToken    Value;
         [FieldOffset(1)] public VariableToken Variable;
@@ -27,12 +27,11 @@ namespace LiteEval.Tokens {
             };
         }
 
-        internal static Token CreateVariableToken(ReadOnlySpan<char> str) {
-            var token = new Token {
-                Type = TokenType.Variable,
+        internal static Token CreateVariableToken(int nameIndex) {
+            return new Token {
+                Type     = TokenType.Variable,
+                Variable = new() { NameIndex = nameIndex }
             };
-            str.CopyTo(new(token.Variable.Name, 32));
-            return token;
         }
 
         internal static Token CreateFunctionToken(ReadOnlySpan<char> str) {
@@ -41,6 +40,13 @@ namespace LiteEval.Tokens {
                 Function = new() { Type = Enum.Parse<FunctionType>(str.ToString(), true) }
             };
             return token;
+        }
+
+        internal static Token CreateFunctionToken(FunctionType type) {
+            return new Token {
+                Type     = TokenType.Function,
+                Function = new() { Type = type }
+            };
         }
 
         internal static Token CreateOperatorToken(char c) {

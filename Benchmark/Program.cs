@@ -15,11 +15,14 @@ public class ExpressionBenchmark {
     private Expression     _expression;
     private ExpressionCalc _expressionCalc;
     private Expression     _expressionComplex;
+    private byte[]         _serializedBytes;
+    private byte[]         _serializedComplexBytes;
+    private string         _serializedString;
 
     [GlobalSetup]
     public void Setup() {
         _expression             = new Expression("2 * 3 + (4 - 1) ^ 2");
-        _expressionComplex      = new Expression("3*x^2 + 2*y + z + sin(w) + cos(v) + tan(u) - log(t) + sqrt(s) + atan2(r, q) - max(p, o) + min(n, m) + abs(l) + round(k) + floor(j) + ceiling(i) - truncate(h) + sign(g)");
+        _expressionComplex      = new Expression("3*{x}^2 + 2*{y} + {z} + sin({w}) + cos({v}) + tan({u}) - log({t}) + sqrt({s}) + atan2({r}, {q}) - max({p}, {o}) + min({n}, {m}) + abs({l}) + round({k}) + floor({j}) + ceiling({i}) - truncate({h}) + sign({g})");
         ValueProviderContext.SetGlobalValueProvider(
             new ValueProvider()
                 .Add("x", 5)
@@ -44,6 +47,9 @@ public class ExpressionBenchmark {
                 .Add("g", -14)
             );
         _expressionCalc         = new ExpressionCalc("2 * 3 + (4 - 1) ^ 2");
+        _serializedBytes        = _expression.ToBytes();
+        _serializedComplexBytes = _expressionComplex.ToBytes();
+        _serializedString       = _expression.ToString();
     }
 
     [Benchmark]
@@ -53,7 +59,7 @@ public class ExpressionBenchmark {
 
     [Benchmark]
     public void NewComplexExpression() {
-        var _expressionComplex = new Expression("3*x^2 + 2*y + z + sin(w) + cos(v) + tan(u) - log(t) + sqrt(s) + atan2(r, q) - max(p, o) + min(n, m) + abs(l) + round(k) + floor(j) + ceiling(i) - truncate(h) + sign(g)");
+        var _expressionComplex = new Expression("3*{x}^2 + 2*{y} + {z} + sin({w}) + cos({v}) + tan({u}) - log({t}) + sqrt({s}) + atan2({r}, {q}) - max({p}, {o}) + min({n}, {m}) + abs({l}) + round({k}) + floor({j}) + ceiling({i}) - truncate({h}) + sign({g})");
         using var context = new ValueProviderContext(
             new ValueProvider()
                 .Add("x", 5)
@@ -98,4 +104,22 @@ public class ExpressionBenchmark {
     public void BenchmarkEval() {
         var result = _expressionCalc.Eval();
     }
+
+    [Benchmark]
+    public byte[] BenchmarkToBytes() => _expression.ToBytes();
+
+    [Benchmark]
+    public byte[] BenchmarkToBytesComplex() => _expressionComplex.ToBytes();
+
+    [Benchmark]
+    public Expression BenchmarkFromBytes() => Expression.FromBytes(_serializedBytes);
+
+    [Benchmark]
+    public Expression BenchmarkFromBytesComplex() => Expression.FromBytes(_serializedComplexBytes);
+
+    [Benchmark]
+    public Expression BenchmarkFromString() => new Expression(_serializedString);
+
+    [Benchmark]
+    public string BenchmarkToString() => _expression.ToString();
 }

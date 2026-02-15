@@ -44,8 +44,11 @@ jobs:
           git push
           
       - name: Pack
-        run: dotnet pack Solution/LiteEval.csproj --configuration Release --no-build --output ./nupkgs
+        run: |
+          dotnet pack Solution/LiteEval.csproj --configuration Release --no-build --output ./nupkgs
+          dotnet pack LiteEval.Serialization.Newtonsoft/LiteEval.Serialization.Newtonsoft.csproj --configuration Release --no-build --output ./nupkgs
+          dotnet pack LiteEval.Serialization.MessagePack/LiteEval.Serialization.MessagePack.csproj --configuration Release --no-build --output ./nupkgs
 
       - name: Publish the package
-        run: dotnet nuget push ./nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push ./nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
