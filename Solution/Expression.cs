@@ -4,7 +4,6 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using LiteEval.Enums;
 using LiteEval.Tokens;
 using LiteEval.Utility;
@@ -12,12 +11,6 @@ using LiteEval.Utility;
 namespace LiteEval {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Expression {
-        private static readonly Regex Regex = new(
-            @"(?<number>\d+(\.\d+)?([eE][+-]?\d+)?)|(?<function>[a-zA-Z_][_a-zA-Z0-9]+(?=\s*\())|{\s*(?<variable>[a-zA-Z_][\._a-zA-Z0-9]*)\s*}|(?<operator>[+/*^()-])",
-            RegexOptions.Compiled);
-
-        private static readonly char exponentChar = 'E';
-
         internal Token[]  Tokens;
         internal string[] VariableNames;
 
@@ -34,43 +27,101 @@ namespace LiteEval {
         }
 
         private static (Token[], string[]) Tokenize(ReadOnlySpan<char> expression) {
-            var tokens        = ExpressionUtility<Token>.Rent();
-            var stack         = ExpressionUtility<Token>.RentStack();
+            var tokens = ExpressionUtility<Token>.Rent();
+            var stack  = ExpressionUtility<Token>.RentStack();
 
             var variableDict = new Dictionary<string, int>();
             var variableList = new List<string>();
 
             Token? previousToken = null;
-            var    expressionStr = expression.ToString();
-            foreach (Match m in Regex.Matches(expressionStr)) {
-                var slice = expressionStr.AsSpan(m.Index, m.Length);
-                if (m.Groups["number"].Success) {
-                    var token = Token.CreateValueToken(slice);
+            int    pos           = 0;
 
+            while (pos < expression.Length) {
+                var c = expression[pos];
+
+                // Skip whitespace
+                if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
+                    pos++;
+                    continue;
+                }
+
+                // Number: starts with digit
+                if (c >= '0' && c <= '9') {
+                    int start = pos;
+                    while (pos < expression.Length && expression[pos] >= '0' && expression[pos] <= '9') pos++;
+                    if (pos < expression.Length && expression[pos] == '.') {
+                        pos++;
+                        while (pos < expression.Length && expression[pos] >= '0' && expression[pos] <= '9') pos++;
+                    }
+                    // Scientific notation
+                    if (pos < expression.Length && (expression[pos] == 'e' || expression[pos] == 'E')) {
+                        int expStart = pos;
+                        pos++;
+                        if (pos < expression.Length && (expression[pos] == '+' || expression[pos] == '-')) pos++;
+                        if (pos < expression.Length && expression[pos] >= '0' && expression[pos] <= '9') {
+                            while (pos < expression.Length && expression[pos] >= '0' && expression[pos] <= '9') pos++;
+                        }
+                        else {
+                            pos = expStart; // backtrack - not a valid exponent
+                        }
+                    }
+
+                    var token = Token.CreateValueToken(expression.Slice(start, pos - start));
                     tokens.Add(token);
                     previousToken = token;
                 }
-                else if (m.Groups["variable"].Success) {
-                    var g    = m.Groups["variable"];
-                    var name = expressionStr.Substring(g.Index, g.Length);
+                // Variable: { name }
+                else if (c == '{') {
+                    pos++;
+                    while (pos < expression.Length && expression[pos] == ' ') pos++;
+                    int nameStart = pos;
+                    int nameEnd = nameStart;
+                    while (pos < expression.Length && expression[pos] != '}') {
+                        if (expression[pos] != ' ') nameEnd = pos + 1;
+                        pos++;
+                    }
+                    if (pos < expression.Length && expression[pos] == '}') pos++;
+
+                    var name = expression.Slice(nameStart, nameEnd - nameStart).ToString();
                     if (!variableDict.TryGetValue(name, out var nameIndex)) {
                         nameIndex = variableList.Count;
                         variableDict[name] = nameIndex;
                         variableList.Add(name);
                     }
+
                     var token = Token.CreateVariableToken(nameIndex);
                     tokens.Add(token);
                     previousToken = token;
                 }
-                else if (m.Groups["function"].Success) {
-                    var token = Token.CreateFunctionToken(slice);
-                    stack.Push(token);
-                    previousToken = token;
+                // Identifier: function name
+                else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_') {
+                    int start = pos;
+                    pos++;
+                    while (pos < expression.Length &&
+                           ((expression[pos] >= 'a' && expression[pos] <= 'z') ||
+                            (expression[pos] >= 'A' && expression[pos] <= 'Z') ||
+                            (expression[pos] >= '0' && expression[pos] <= '9') ||
+                            expression[pos] == '_')) {
+                        pos++;
+                    }
+
+                    // Check if followed by '(' (with optional whitespace)
+                    int lookahead = pos;
+                    while (lookahead < expression.Length && expression[lookahead] == ' ') lookahead++;
+
+                    if (lookahead < expression.Length && expression[lookahead] == '(') {
+                        var token = Token.CreateFunctionToken(expression.Slice(start, pos - start));
+                        stack.Push(token);
+                        previousToken = token;
+                    }
+                    // else: unrecognized identifier, skip
                 }
-                else if (m.Groups["operator"].Success) {
-                    var operatorToken = IsUnaryOperator(slice[0], previousToken)
-                                            ? Token.CreateUnaryMinusToken()
-                                            : Token.CreateOperatorToken(slice[0]);
+                // Operators
+                else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '^' ||
+                         c == '(' || c == ')' || c == ',') {
+                    var operatorToken = IsUnaryOperator(c, previousToken)
+                        ? Token.CreateUnaryMinusToken()
+                        : Token.CreateOperatorToken(c);
 
                     if (operatorToken.Operator.Type == OperatorType.ParenthesisStart) {
                         stack.Push(operatorToken);
@@ -78,19 +129,22 @@ namespace LiteEval {
                     }
                     else if (operatorToken.Operator.Type is OperatorType.ParenthesisEnd
                                                          or OperatorType.Comma) {
-                        while (stack.Count > 0 && stack.Peek() is not { Operator : { Type: OperatorType.ParenthesisStart } }) {
+                        while (stack.Count > 0 && stack.Peek() is not { Operator: { Type: OperatorType.ParenthesisStart } }) {
                             tokens.Add(stack.Pop());
                         }
 
-                        if (operatorToken.Operator.Type != OperatorType.Comma) {
-                            if (stack.Count > 0 && stack.Peek() is { Operator : { Type : OperatorType.ParenthesisStart } }) {
+                        if (operatorToken.Operator.Type == OperatorType.Comma) {
+                            previousToken = operatorToken;
+                        }
+                        else {
+                            if (stack.Count > 0 && stack.Peek() is { Operator: { Type: OperatorType.ParenthesisStart } }) {
                                 stack.Pop(); // Discard '('
                                 previousToken = operatorToken;
                             }
 
-                            if (stack.Count > 0 && stack.Peek() is { Type : TokenType.Function }) {
+                            if (stack.Count > 0 && stack.Peek() is { Type: TokenType.Function }) {
                                 var functionToken = stack.Pop();
-                                tokens.Add(functionToken); // Add the function token to the output
+                                tokens.Add(functionToken);
                                 previousToken = functionToken;
                             }
                         }
@@ -105,6 +159,11 @@ namespace LiteEval {
                         stack.Push(operatorToken);
                         previousToken = operatorToken;
                     }
+
+                    pos++;
+                }
+                else {
+                    pos++; // skip unknown character
                 }
             }
 

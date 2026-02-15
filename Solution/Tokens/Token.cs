@@ -37,9 +37,49 @@ namespace LiteEval.Tokens {
         internal static Token CreateFunctionToken(ReadOnlySpan<char> str) {
             var token = new Token {
                 Type     = TokenType.Function,
-                Function = new() { Type = Enum.Parse<FunctionType>(str.ToString(), true) }
+                Function = new() { Type = ParseFunctionType(str) }
             };
             return token;
+        }
+
+        private static FunctionType ParseFunctionType(ReadOnlySpan<char> name) {
+            switch (name.Length) {
+                case 3:
+                    if (name.Equals("abs", StringComparison.OrdinalIgnoreCase)) return FunctionType.Abs;
+                    if (name.Equals("cos", StringComparison.OrdinalIgnoreCase)) return FunctionType.Cos;
+                    if (name.Equals("exp", StringComparison.OrdinalIgnoreCase)) return FunctionType.Exp;
+                    if (name.Equals("log", StringComparison.OrdinalIgnoreCase)) return FunctionType.Log;
+                    if (name.Equals("max", StringComparison.OrdinalIgnoreCase)) return FunctionType.Max;
+                    if (name.Equals("min", StringComparison.OrdinalIgnoreCase)) return FunctionType.Min;
+                    if (name.Equals("pow", StringComparison.OrdinalIgnoreCase)) return FunctionType.Pow;
+                    if (name.Equals("sin", StringComparison.OrdinalIgnoreCase)) return FunctionType.Sin;
+                    if (name.Equals("tan", StringComparison.OrdinalIgnoreCase)) return FunctionType.Tan;
+                    break;
+                case 4:
+                    if (name.Equals("acos", StringComparison.OrdinalIgnoreCase)) return FunctionType.Acos;
+                    if (name.Equals("asin", StringComparison.OrdinalIgnoreCase)) return FunctionType.Asin;
+                    if (name.Equals("atan", StringComparison.OrdinalIgnoreCase)) return FunctionType.Atan;
+                    if (name.Equals("cosh", StringComparison.OrdinalIgnoreCase)) return FunctionType.Cosh;
+                    if (name.Equals("sign", StringComparison.OrdinalIgnoreCase)) return FunctionType.Sign;
+                    if (name.Equals("sinh", StringComparison.OrdinalIgnoreCase)) return FunctionType.Sinh;
+                    if (name.Equals("sqrt", StringComparison.OrdinalIgnoreCase)) return FunctionType.Sqrt;
+                    if (name.Equals("tanh", StringComparison.OrdinalIgnoreCase)) return FunctionType.Tanh;
+                    break;
+                case 5:
+                    if (name.Equals("atan2", StringComparison.OrdinalIgnoreCase)) return FunctionType.Atan2;
+                    if (name.Equals("floor", StringComparison.OrdinalIgnoreCase)) return FunctionType.Floor;
+                    if (name.Equals("log10", StringComparison.OrdinalIgnoreCase)) return FunctionType.Log10;
+                    if (name.Equals("round", StringComparison.OrdinalIgnoreCase)) return FunctionType.Round;
+                    break;
+                case 7:
+                    if (name.Equals("ceiling", StringComparison.OrdinalIgnoreCase)) return FunctionType.Ceiling;
+                    break;
+                case 8:
+                    if (name.Equals("truncate", StringComparison.OrdinalIgnoreCase)) return FunctionType.Truncate;
+                    break;
+            }
+
+            throw new ArgumentException("Unknown function: " + name.ToString());
         }
 
         internal static Token CreateFunctionToken(FunctionType type) {
