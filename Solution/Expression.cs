@@ -13,7 +13,7 @@ namespace LiteEval {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Expression {
         private static readonly Regex Regex = new(
-            @"(?<number>\d+(\.\d+)?)|(?<function>[a-zA-Z_][_a-zA-Z0-9]+(?=\s*\())|{\s*(?<variable>[a-zA-Z_][\._a-zA-Z0-9]*)\s*}|(?<operator>[+/*^()-])",
+            @"(?<number>\d+(\.\d+)?([eE][+-]?\d+)?)|(?<function>[a-zA-Z_][_a-zA-Z0-9]+(?=\s*\())|{\s*(?<variable>[a-zA-Z_][\._a-zA-Z0-9]*)\s*}|(?<operator>[+/*^()-])",
             RegexOptions.Compiled);
 
         private static readonly char exponentChar = 'E';
