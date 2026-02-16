@@ -1,19 +1,19 @@
 {
-    "name": "dev.breadpack.liteeval",
-    "version": "1.0.0",
-    "displayName": "LiteEval",
-    "description": "lite-weight expression evaluator",
-    "unity": "2022.3",
-    "keywords": [
-        "unity",
-        "package",
-        "liteeval",
-        "expression",
-        "evaluator"
-    ],
-    "author": {
-        "name": "BreadPack",
-        "email": "milennium9@gmail.com",
-        "url": "https://github.com/breadpack/LiteEval"
-    }
+  "name": "dev.breadpack.liteeval",
+  "version": "1.0.10",
+  "displayName": "LiteEval",
+  "description": "lite-weight expression evaluator",
+  "unity": "2022.3",
+  "keywords": [
+    "unity",
+    "package",
+    "liteeval",
+    "expression",
+    "evaluator"
+  ],
+  "author": {
+    "name": "BreadPack",
+    "email": "milennium9@gmail.com",
+    "url": "https://github.com/breadpack/LiteEval"
+  }
 }
