@@ -16,6 +16,9 @@ jobs:
           fetch-depth: 0
           ref: master
 
+      - name: Extract version from tag
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v2
         with:
@@ -35,6 +38,10 @@ jobs:
           cp Solution/bin/Release/netstandard2.1/*.dll UnityPackage/Runtime/
           cp Solution/bin/Release/netstandard2.1/*.pdb UnityPackage/Runtime/
 
+      - name: Update Unity package version
+        run: |
+          jq --arg v "${{ env.VERSION }}" '.version = $v' UnityPackage/package.json > tmp.json && mv tmp.json UnityPackage/package.json
+
       - name: Commit files
         run: |
           git config --local user.email "action@github.com"
@@ -46,9 +53,9 @@ jobs:
           
       - name: Pack
         run: |
-          dotnet pack Solution/LiteEval.csproj --configuration Release --no-build --output ./nupkgs
-          dotnet pack LiteEval.Serialization.Newtonsoft/LiteEval.Serialization.Newtonsoft.csproj --configuration Release --no-build --output ./nupkgs
-          dotnet pack LiteEval.Serialization.MessagePack/LiteEval.Serialization.MessagePack.csproj --configuration Release --no-build --output ./nupkgs
+          dotnet pack Solution/LiteEval.csproj --configuration Release --no-build --output ./nupkgs -p:Version=${{ env.VERSION }}
+          dotnet pack LiteEval.Serialization.Newtonsoft/LiteEval.Serialization.Newtonsoft.csproj --configuration Release --no-build --output ./nupkgs -p:Version=${{ env.VERSION }}
+          dotnet pack LiteEval.Serialization.MessagePack/LiteEval.Serialization.MessagePack.csproj --configuration Release --no-build --output ./nupkgs -p:Version=${{ env.VERSION }}
 
       - name: Publish the package
         run: dotnet nuget push ./nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
