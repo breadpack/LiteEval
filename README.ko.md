@@ -177,6 +177,46 @@ byte[] bytes = MessagePackSerializer.Serialize(expr, options);
 var restored = MessagePackSerializer.Deserialize<Expression>(bytes, options);
 ```
 
+## 벤치마크
+
+[BenchmarkDotNet](https://benchmarkdotnet.org/)으로 Apple M1 / .NET 8.0 환경에서 측정했습니다.
+
+단순 수식: `2 * 3 + (4 - 1) ^ 2`
+복합 수식: `3*{x}^2 + 2*{y} + {z} + sin({w}) + ...` (변수 17개, 함수 10개 이상)
+
+### 평가
+
+| 항목 | 평균 | 메모리 할당 |
+|---|---:|---:|
+| 단순 수식 평가 (`Result`) | 36.92 ns | **0 B** |
+| 복합 수식 평가 (`Result`) | 529.41 ns | **0 B** |
+| 기존 `ExpressionCalc.Eval()` | 942.53 ns | 2,872 B |
+
+`Expression`을 한번 생성한 뒤에는 평가 시 **관리 힙에 메모리를 전혀 할당하지 않습니다** — 수식 복잡도와 무관합니다.
+
+### 생성
+
+| 항목 | 평균 | 메모리 할당 |
+|---|---:|---:|
+| `new Expression(단순)` | 342.98 ns | 224 B |
+| `new Expression(복합)` | 2,620.39 ns | 8,608 B |
+| 기존 `new ExpressionCalc(단순)` | 130.17 ns | 288 B |
+
+생성 시 토큰화와 컴파일을 수행합니다. 반복 할당을 피하려면 `Expression` 객체를 재사용하세요.
+
+### 직렬화
+
+| 항목 | 평균 | 메모리 할당 |
+|---|---:|---:|
+| `ToBytes()` (단순) | 47.57 ns | 88 B |
+| `ToBytes()` (복합) | 330.67 ns | 264 B |
+| `FromBytes()` (단순) | 24.37 ns | 112 B |
+| `FromBytes()` (복합) | 324.26 ns | 1,192 B |
+| `new Expression(string)` | 341.00 ns | 224 B |
+| `ToString()` | 356.85 ns | 184 B |
+
+바이너리 역직렬화(`FromBytes`)는 문자열 파싱보다 빠릅니다. 특히 복합 수식에서 차이가 큽니다.
+
 ## 라이선스
 
 [LICENSE](LICENSE) 파일을 참고하세요.

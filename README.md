@@ -177,6 +177,46 @@ byte[] bytes = MessagePackSerializer.Serialize(expr, options);
 var restored = MessagePackSerializer.Deserialize<Expression>(bytes, options);
 ```
 
+## Benchmark
+
+Measured with [BenchmarkDotNet](https://benchmarkdotnet.org/) on Apple M1 / .NET 8.0.
+
+Simple expression: `2 * 3 + (4 - 1) ^ 2`
+Complex expression: `3*{x}^2 + 2*{y} + {z} + sin({w}) + ...` (17 variables, 10+ functions)
+
+### Evaluation
+
+| Method | Mean | Allocated |
+|---|---:|---:|
+| Simple evaluation (`Result`) | 36.92 ns | **0 B** |
+| Complex evaluation (`Result`) | 529.41 ns | **0 B** |
+| Legacy `ExpressionCalc.Eval()` | 942.53 ns | 2,872 B |
+
+Once an `Expression` is constructed, evaluation allocates **zero bytes** on the managed heap — regardless of expression complexity.
+
+### Construction
+
+| Method | Mean | Allocated |
+|---|---:|---:|
+| `new Expression(simple)` | 342.98 ns | 224 B |
+| `new Expression(complex)` | 2,620.39 ns | 8,608 B |
+| Legacy `new ExpressionCalc(simple)` | 130.17 ns | 288 B |
+
+Construction performs tokenization and compilation. Reuse `Expression` objects to avoid repeated allocation.
+
+### Serialization
+
+| Method | Mean | Allocated |
+|---|---:|---:|
+| `ToBytes()` (simple) | 47.57 ns | 88 B |
+| `ToBytes()` (complex) | 330.67 ns | 264 B |
+| `FromBytes()` (simple) | 24.37 ns | 112 B |
+| `FromBytes()` (complex) | 324.26 ns | 1,192 B |
+| `new Expression(string)` | 341.00 ns | 224 B |
+| `ToString()` | 356.85 ns | 184 B |
+
+Binary deserialization (`FromBytes`) is significantly faster than parsing from string, especially for complex expressions.
+
 ## License
 
 See [LICENSE](LICENSE) for details.
