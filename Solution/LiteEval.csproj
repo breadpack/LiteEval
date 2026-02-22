@@ -9,10 +9,15 @@
         <PackageId>dev.breadpack.LiteEval</PackageId>
         <Product>LiteEval</Product>
         <Description>This project is a lightweight expression evaluator for C#. It includes utilities for parsing and evaluating mathematical expressions.</Description>
-        <Version>1.0.9</Version>
+        <Version>1.0.11</Version>
         <Authors>BreadPack</Authors>
         <RepositoryUrl>https://github.com/breadpack/LiteEval</RepositoryUrl>
         <RepositoryType>github</RepositoryType>
     </PropertyGroup>
+
+    <Target Name="CopyToUnityPackage" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)..\UnityPackage\Runtime\" OverwriteReadOnlyFiles="true" />
+        <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(ProjectDir)..\UnityPackage\Runtime\" OverwriteReadOnlyFiles="true" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
+    </Target>
 
 </Project>
