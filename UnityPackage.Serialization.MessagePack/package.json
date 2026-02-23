@@ -1,6 +1,6 @@
 {
   "name": "dev.breadpack.liteeval.serialization.messagepack",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "displayName": "LiteEval Serialization - MessagePack",
   "description": "MessagePack serialization support for LiteEval Expression",
   "unity": "2022.3",
@@ -10,7 +10,7 @@
     "serialization"
   ],
   "dependencies": {
-    "dev.breadpack.liteeval": "1.0.11"
+    "dev.breadpack.liteeval": "1.0.12"
   },
   "author": {
     "name": "BreadPack",

@@ -1,6 +1,6 @@
 {
   "name": "dev.breadpack.liteeval",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "displayName": "LiteEval",
   "description": "lite-weight expression evaluator",
   "unity": "2022.3",

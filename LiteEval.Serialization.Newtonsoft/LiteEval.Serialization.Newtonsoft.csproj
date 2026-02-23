@@ -8,7 +8,7 @@
         <PackageId>dev.breadpack.LiteEval.Serialization.Newtonsoft</PackageId>
         <Product>LiteEval.Serialization.Newtonsoft</Product>
         <Description>Newtonsoft.Json serialization support for LiteEval Expression.</Description>
-        <Version>1.0.11</Version>
+        <Version>1.0.12</Version>
         <Authors>BreadPack</Authors>
         <RepositoryUrl>https://github.com/breadpack/LiteEval</RepositoryUrl>
         <RepositoryType>github</RepositoryType>

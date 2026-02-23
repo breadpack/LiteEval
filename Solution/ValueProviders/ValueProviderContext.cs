@@ -5,8 +5,7 @@ using System.Threading;
 
 namespace LiteEval {
     public class ValueProviderContext : IDisposable {
-        private static object _lock = new();
-        private static IValueProvider _globalProvider = null;
+        private static volatile IValueProvider _globalProvider = null;
 
         private static readonly AsyncLocal<Stack<IValueProvider>> _providers = new();
         
@@ -23,9 +22,7 @@ namespace LiteEval {
         }
 
         public static void SetGlobalValueProvider(IValueProvider provider) {
-            lock (_lock) {
-                _globalProvider = provider;
-            }
+            _globalProvider = provider;
         }
 
         public static bool TryGetValue(ReadOnlySpan<char> name, out double value) {
@@ -36,12 +33,10 @@ namespace LiteEval {
                     }
                 }
             }
-            
-            lock (_lock) {
-                if (_globalProvider != null && _globalProvider.TryGetValue(name, out value)) {
-                    return true;
-                }
-            }
+
+            var global = _globalProvider;
+            if (global != null && global.TryGetValue(name, out value))
+                return true;
 
             value = 0;
             return false;
